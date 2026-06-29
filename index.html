@@ -139,9 +139,9 @@
         <div class="grid lg:grid-cols-3 gap-4">
           <!-- Menú -->
           <div class="lg:col-span-2">
-            <div class="flex items-center justify-between mb-3">
-              <h2 class="text-xl font-bold text-slate-900">Comanda · <span id="comanda-mesa">Mesa 5</span></h2>
-              <span class="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded-full">Mesero: Ana</span>
+            <div class="flex items-center justify-between gap-2 flex-wrap mb-3">
+              <h2 class="text-lg sm:text-xl font-bold text-slate-900">Comanda · <span id="comanda-mesa">Mesa 5</span></h2>
+              <span class="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded-full whitespace-nowrap">Mesero: Ana</span>
             </div>
             <div id="cat-tabs" class="flex gap-2 overflow-x-auto pb-2 mb-3"></div>
             <div id="grid-productos" class="grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
@@ -199,29 +199,89 @@
         </div>
       </section>
 
-      <!-- ====================== INVENTARIO / ALERTAS ====================== -->
+      <!-- ====================== INVENTARIO ====================== -->
       <section id="inventario" class="screen">
-        <h2 class="text-xl sm:text-2xl font-bold text-slate-900 mb-1">Inventario</h2>
-        <p class="text-sm text-slate-500 mb-4">Control de stock con alertas por tope mínimo</p>
+        <div class="flex items-start justify-between gap-2 flex-wrap mb-3">
+          <div>
+            <h2 class="text-xl sm:text-2xl font-bold text-slate-900">Inventario</h2>
+            <p class="text-sm text-slate-500">Ingresa insumos, registra entradas y controla lo que hace falta</p>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="abrirEntrada()" class="bg-white border border-slate-300 hover:bg-slate-50 text-sm font-semibold rounded-lg px-3 py-2 flex items-center gap-1">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M12 4v12m0 0l-4-4m4 4l4-4M4 20h16"/></svg>
+              <span class="hidden sm:inline">Registrar entrada</span>
+            </button>
+            <button onclick="abrirModal('modal-insumo')" class="bg-marca-600 hover:bg-marca-700 text-white text-sm font-semibold rounded-lg px-3 py-2 flex items-center gap-1">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M12 5v14M5 12h14"/></svg>
+              <span class="hidden sm:inline">Nuevo insumo</span>
+            </button>
+          </div>
+        </div>
+
         <div class="grid grid-cols-3 gap-3 mb-4">
           <div class="bg-white rounded-xl border border-slate-200 p-3 text-center"><p class="text-2xl font-bold text-emerald-600" id="kpi-ok">0</p><p class="text-xs text-slate-500">En nivel OK</p></div>
           <div class="bg-white rounded-xl border border-slate-200 p-3 text-center"><p class="text-2xl font-bold text-amber-500" id="kpi-bajo">0</p><p class="text-xs text-slate-500">Stock bajo</p></div>
           <div class="bg-white rounded-xl border border-slate-200 p-3 text-center"><p class="text-2xl font-bold text-rose-600" id="kpi-critico">0</p><p class="text-xs text-slate-500">Crítico</p></div>
         </div>
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-          <table class="w-full text-sm">
+
+        <div class="relative mb-3">
+          <svg class="w-4 h-4 absolute left-3 top-3 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M21 21l-4.3-4.3M11 19a8 8 0 100-16 8 8 0 000 16z"/></svg>
+          <input id="buscar-inv" oninput="renderInventario()" placeholder="Buscar insumo..." class="w-full bg-white border border-slate-200 rounded-lg pl-9 pr-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-marca-400" />
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-x-auto">
+          <table class="w-full text-sm min-w-[460px]">
             <thead class="bg-slate-50 text-slate-500 text-xs uppercase">
-              <tr><th class="text-left px-4 py-2.5">Insumo</th><th class="text-right px-3 py-2.5">Stock</th><th class="text-right px-3 py-2.5 hidden sm:table-cell">Mín.</th><th class="text-right px-4 py-2.5">Estado</th></tr>
+              <tr>
+                <th class="text-left px-4 py-2.5">Insumo</th>
+                <th class="text-right px-3 py-2.5">Stock</th>
+                <th class="text-right px-3 py-2.5 hidden sm:table-cell">Mín.</th>
+                <th class="text-center px-3 py-2.5">Estado</th>
+                <th class="text-right px-4 py-2.5">Acción</th>
+              </tr>
             </thead>
             <tbody id="tbody-inv" class="divide-y divide-slate-100"></tbody>
           </table>
+          <p id="inv-vacio" class="hidden text-center text-sm text-slate-400 py-8">No se encontraron insumos.</p>
         </div>
       </section>
 
       <!-- ====================== ALERTAS ====================== -->
       <section id="alertas" class="screen">
         <h2 class="text-xl sm:text-2xl font-bold text-slate-900 mb-1">Alertas de stock</h2>
-        <p class="text-sm text-slate-500 mb-4">Insumos que llegaron a su tope mínimo</p>
+        <p class="text-sm text-slate-500 mb-4">Insumos que llegaron a su tope mínimo · notificación por correo y WhatsApp</p>
+
+        <!-- Canales de notificación -->
+        <div class="bg-white rounded-2xl border border-slate-200 p-4 mb-4">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-bold text-slate-900">Canales de alerta</h3>
+            <button onclick="abrirAlertasConfig()" class="text-xs text-marca-700 font-semibold hover:underline">Configurar</button>
+          </div>
+          <div class="grid sm:grid-cols-2 gap-3">
+            <div id="canal-email" class="flex items-center gap-3 rounded-xl border border-slate-200 p-3">
+              <div class="w-9 h-9 rounded-lg bg-blue-50 grid place-items-center">📧</div>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium">Correo</p>
+                <p class="text-xs text-slate-500 truncate" id="canal-email-dest">dev@edemco.co</p>
+              </div>
+              <span id="canal-email-estado" class="text-[11px] px-2 py-0.5 rounded-full text-emerald-700 bg-emerald-50">Activo</span>
+            </div>
+            <div id="canal-wa" class="flex items-center gap-3 rounded-xl border border-slate-200 p-3">
+              <div class="w-9 h-9 rounded-lg bg-emerald-50 grid place-items-center">📱</div>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium">WhatsApp</p>
+                <p class="text-xs text-slate-500 truncate" id="canal-wa-dest">+57 300 123 4567</p>
+              </div>
+              <span id="canal-wa-estado" class="text-[11px] px-2 py-0.5 rounded-full text-emerald-700 bg-emerald-50">Activo</span>
+            </div>
+          </div>
+          <button onclick="enviarAlertas()" class="w-full mt-3 bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold rounded-lg py-2.5">Enviar alertas ahora</button>
+        </div>
+
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="font-bold text-slate-900">Por reabastecer</h3>
+          <span id="reab-count" class="text-xs text-slate-500"></span>
+        </div>
         <div id="lista-alertas" class="space-y-3"></div>
       </section>
 
@@ -255,8 +315,8 @@
 <nav class="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-white border-t border-slate-200 grid grid-cols-5 text-[11px]" id="bottom-nav"></nav>
 
 <!-- ===== MODALES ===== -->
-<div id="modal-mesa" class="hidden fixed inset-0 z-50 bg-black/40 grid place-items-center p-4" onclick="cerrarModalBg(event,'modal-mesa')">
-  <div class="bg-white rounded-2xl p-5 w-full max-w-sm">
+<div id="modal-mesa" class="hidden fixed inset-0 z-50 bg-black/40 grid place-items-center p-4 overflow-y-auto" onclick="cerrarModalBg(event,'modal-mesa')">
+  <div class="bg-white rounded-2xl p-5 w-full max-w-sm max-h-[90vh] overflow-y-auto my-auto">
     <h3 class="font-bold text-lg mb-3">Agregar mesa</h3>
     <label class="block text-sm font-medium mb-1">Nombre / número</label>
     <input id="nueva-mesa-nombre" class="w-full border border-slate-300 rounded-lg px-3 py-2.5 mb-3 outline-none focus:ring-2 focus:ring-marca-400" placeholder="Mesa 13" />
@@ -271,8 +331,8 @@
   </div>
 </div>
 
-<div id="modal-dividir" class="hidden fixed inset-0 z-50 bg-black/40 grid place-items-center p-4" onclick="cerrarModalBg(event,'modal-dividir')">
-  <div class="bg-white rounded-2xl p-5 w-full max-w-sm">
+<div id="modal-dividir" class="hidden fixed inset-0 z-50 bg-black/40 grid place-items-center p-4 overflow-y-auto" onclick="cerrarModalBg(event,'modal-dividir')">
+  <div class="bg-white rounded-2xl p-5 w-full max-w-sm max-h-[90vh] overflow-y-auto my-auto">
     <h3 class="font-bold text-lg mb-3">Dividir la cuenta</h3>
     <p class="text-sm text-slate-500 mb-4">Elige cómo repartir el total.</p>
     <div class="space-y-2">
@@ -280,6 +340,72 @@
       <button onclick="cerrarModal('modal-dividir')" class="w-full border border-slate-200 rounded-lg py-3 text-left px-4 hover:bg-slate-50">🧾 <strong>Por ítems</strong><span class="block text-xs text-slate-500">Cada quien paga lo suyo</span></button>
     </div>
     <button onclick="cerrarModal('modal-dividir')" class="w-full mt-4 text-sm text-slate-500 py-2">Cerrar</button>
+  </div>
+</div>
+
+<!-- Modal: nuevo insumo -->
+<div id="modal-insumo" class="hidden fixed inset-0 z-50 bg-black/40 grid place-items-center p-4 overflow-y-auto" onclick="cerrarModalBg(event,'modal-insumo')">
+  <div class="bg-white rounded-2xl p-5 w-full max-w-sm max-h-[90vh] overflow-y-auto my-auto">
+    <h3 class="font-bold text-lg mb-3">Nuevo insumo</h3>
+    <label class="block text-sm font-medium mb-1">Nombre</label>
+    <input id="ins-nombre" class="w-full border border-slate-300 rounded-lg px-3 py-2.5 mb-3 outline-none focus:ring-2 focus:ring-marca-400" placeholder="Ej. Ginebra" />
+    <div class="grid grid-cols-2 gap-3 mb-3">
+      <div>
+        <label class="block text-sm font-medium mb-1">Unidad</label>
+        <select id="ins-unidad" class="w-full border border-slate-300 rounded-lg px-3 py-2.5 outline-none focus:ring-2 focus:ring-marca-400"></select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1">Stock inicial</label>
+        <input id="ins-stock" type="number" min="0" class="w-full border border-slate-300 rounded-lg px-3 py-2.5 outline-none focus:ring-2 focus:ring-marca-400" placeholder="0" />
+      </div>
+    </div>
+    <label class="block text-sm font-medium mb-1">Tope mínimo (alerta)</label>
+    <input id="ins-min" type="number" min="0" class="w-full border border-slate-300 rounded-lg px-3 py-2.5 mb-4 outline-none focus:ring-2 focus:ring-marca-400" placeholder="Ej. 500" />
+    <div class="flex gap-2">
+      <button onclick="cerrarModal('modal-insumo')" class="flex-1 border border-slate-300 rounded-lg py-2.5 font-medium">Cancelar</button>
+      <button onclick="crearInsumo()" class="flex-1 bg-marca-600 text-white rounded-lg py-2.5 font-semibold">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: registrar entrada -->
+<div id="modal-entrada" class="hidden fixed inset-0 z-50 bg-black/40 grid place-items-center p-4 overflow-y-auto" onclick="cerrarModalBg(event,'modal-entrada')">
+  <div class="bg-white rounded-2xl p-5 w-full max-w-sm max-h-[90vh] overflow-y-auto my-auto">
+    <h3 class="font-bold text-lg mb-1">Registrar entrada</h3>
+    <p class="text-sm text-slate-500 mb-3">Suma stock por compra o abastecimiento.</p>
+    <label class="block text-sm font-medium mb-1">Insumo</label>
+    <select id="ent-insumo" onchange="entUnidad()" class="w-full border border-slate-300 rounded-lg px-3 py-2.5 mb-3 outline-none focus:ring-2 focus:ring-marca-400"></select>
+    <label class="block text-sm font-medium mb-1">Cantidad que ingresa (<span id="ent-u">und</span>)</label>
+    <input id="ent-cant" type="number" min="1" class="w-full border border-slate-300 rounded-lg px-3 py-2.5 mb-4 outline-none focus:ring-2 focus:ring-marca-400" placeholder="0" />
+    <div class="flex gap-2">
+      <button onclick="cerrarModal('modal-entrada')" class="flex-1 border border-slate-300 rounded-lg py-2.5 font-medium">Cancelar</button>
+      <button onclick="registrarEntrada()" class="flex-1 bg-emerald-600 text-white rounded-lg py-2.5 font-semibold">Registrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: configurar canales de alerta -->
+<div id="modal-alertas-cfg" class="hidden fixed inset-0 z-50 bg-black/40 grid place-items-center p-4 overflow-y-auto" onclick="cerrarModalBg(event,'modal-alertas-cfg')">
+  <div class="bg-white rounded-2xl p-5 w-full max-w-sm max-h-[90vh] overflow-y-auto my-auto">
+    <h3 class="font-bold text-lg mb-1">Canales de alerta</h3>
+    <p class="text-sm text-slate-500 mb-4">¿A dónde enviamos las alertas de stock bajo?</p>
+
+    <div class="flex items-center justify-between mb-2">
+      <label class="text-sm font-medium flex items-center gap-2">📧 Correo</label>
+      <input id="cfg-email-on" type="checkbox" class="w-5 h-5 accent-marca-600" checked />
+    </div>
+    <input id="cfg-email" class="w-full border border-slate-300 rounded-lg px-3 py-2.5 mb-4 outline-none focus:ring-2 focus:ring-marca-400" placeholder="correo@ejemplo.com" />
+
+    <div class="flex items-center justify-between mb-2">
+      <label class="text-sm font-medium flex items-center gap-2">📱 WhatsApp</label>
+      <input id="cfg-wa-on" type="checkbox" class="w-5 h-5 accent-marca-600" checked />
+    </div>
+    <input id="cfg-wa" class="w-full border border-slate-300 rounded-lg px-3 py-2.5 mb-4 outline-none focus:ring-2 focus:ring-marca-400" placeholder="+57 300 000 0000" />
+
+    <div class="flex gap-2">
+      <button onclick="cerrarModal('modal-alertas-cfg')" class="flex-1 border border-slate-300 rounded-lg py-2.5 font-medium">Cancelar</button>
+      <button onclick="guardarNotif()" class="flex-1 bg-marca-600 text-white rounded-lg py-2.5 font-semibold">Guardar</button>
+    </div>
   </div>
 </div>
 
@@ -316,16 +442,20 @@ const MENU = {
   'Gaseosas':  [ {n:'Gaseosa',p:5000}, {n:'Agua',p:4000}, {n:'Jugo natural',p:8000} ],
 };
 
-const INV = [
-  { n:'Ron Viejo de Caldas', u:'ml',  stock:1800, min:750 },
-  { n:'Gaseosa cola 1.5L',   u:'und', stock:6,    min:12 },
-  { n:'Limón',               u:'und', stock:8,    min:20 },
-  { n:'Cerveza nacional',    u:'und', stock:120,  min:48 },
-  { n:'Aguardiente',         u:'ml',  stock:400,  min:750 },
-  { n:'Hielo',               u:'kg',  stock:3,    min:5 },
-  { n:'Papa a la francesa',  u:'kg',  stock:14,   min:6 },
-  { n:'Tequila',             u:'ml',  stock:950,  min:500 },
+let INV = [
+  { id:1, n:'Ron Viejo de Caldas', u:'ml',  stock:1800, min:750 },
+  { id:2, n:'Gaseosa cola 1.5L',   u:'und', stock:6,    min:12 },
+  { id:3, n:'Limón',               u:'und', stock:8,    min:20 },
+  { id:4, n:'Cerveza nacional',    u:'und', stock:120,  min:48 },
+  { id:5, n:'Aguardiente',         u:'ml',  stock:400,  min:750 },
+  { id:6, n:'Hielo',               u:'kg',  stock:3,    min:5 },
+  { id:7, n:'Papa a la francesa',  u:'kg',  stock:14,   min:6 },
+  { id:8, n:'Tequila',             u:'ml',  stock:950,  min:500 },
 ];
+const UNIDADES = ['ml','oz','gr','und','kg','botella','paquete'];
+
+// Configuración de notificaciones (correo / WhatsApp)
+let notif = { emailOn:true, email:'dev@edemco.co', waOn:true, wa:'+57 300 123 4567' };
 
 const TOP = [ {n:'Cerveza Nacional',v:312}, {n:'Cuba Libre',v:188}, {n:'Picada para 2',v:96}, {n:'Mojito',v:74} ];
 const HORAS = [3,5,8,6,9,14,22,28,33,40,31,18];
@@ -482,36 +612,112 @@ function nivel(it){
 }
 function renderInventario(){
   let ok=0,bajo=0,crit=0;
-  document.getElementById('tbody-inv').innerHTML = INV.map(it=>{
+  const q = (document.getElementById('buscar-inv')?.value||'').toLowerCase();
+  INV.forEach(it=>{ const nv=nivel(it); if(nv==='ok')ok++; else if(nv==='bajo')bajo++; else crit++; });
+  const lista = INV.filter(it=>it.n.toLowerCase().includes(q));
+  document.getElementById('tbody-inv').innerHTML = lista.map(it=>{
     const nv = nivel(it);
-    if(nv==='ok')ok++; else if(nv==='bajo')bajo++; else crit++;
     const badge = { ok:'text-emerald-700 bg-emerald-50', bajo:'text-amber-700 bg-amber-50', critico:'text-rose-700 bg-rose-50' }[nv];
     const txt = { ok:'OK', bajo:'Bajo', critico:'Crítico' }[nv];
     return `<tr>
       <td class="px-4 py-2.5 font-medium text-slate-800">${it.n}</td>
       <td class="px-3 py-2.5 text-right">${it.stock} <span class="text-slate-400 text-xs">${it.u}</span></td>
       <td class="px-3 py-2.5 text-right text-slate-400 hidden sm:table-cell">${it.min} ${it.u}</td>
-      <td class="px-4 py-2.5 text-right"><span class="text-xs px-2 py-0.5 rounded-full ${badge}">${txt}</span></td>
+      <td class="px-3 py-2.5 text-center"><span class="text-xs px-2 py-0.5 rounded-full ${badge}">${txt}</span></td>
+      <td class="px-4 py-2.5 text-right"><button onclick="abrirEntrada(${it.id})" class="text-xs border border-slate-300 hover:bg-slate-50 px-2.5 py-1 rounded-lg font-medium">+ Entrada</button></td>
     </tr>`;
   }).join('');
+  document.getElementById('inv-vacio').classList.toggle('hidden', lista.length>0);
   document.getElementById('kpi-ok').textContent=ok;
   document.getElementById('kpi-bajo').textContent=bajo;
   document.getElementById('kpi-critico').textContent=crit;
 }
+
 function renderAlertas(){
   const al = INV.filter(it=>nivel(it)!=='ok');
+  document.getElementById('reab-count').textContent = al.length ? (al.length+' insumo'+(al.length>1?'s':'')) : '';
   document.getElementById('lista-alertas').innerHTML = al.map(it=>{
     const crit = nivel(it)==='critico';
+    const sugerido = Math.max(it.min*2 - it.stock, it.min);
     return `<div class="bg-white rounded-xl border ${crit?'border-rose-200':'border-amber-200'} p-4 flex items-center gap-3">
       <div class="w-10 h-10 rounded-full grid place-items-center ${crit?'bg-rose-100':'bg-amber-100'}">${crit?'🔴':'🟡'}</div>
-      <div class="flex-1">
+      <div class="flex-1 min-w-0">
         <p class="font-semibold text-slate-800">${it.n}</p>
-        <p class="text-xs text-slate-500">Quedan ${it.stock} ${it.u} · tope mínimo ${it.min} ${it.u}</p>
+        <p class="text-xs text-slate-500">Quedan ${it.stock} ${it.u} · tope ${it.min} ${it.u} · sugerido pedir ${sugerido} ${it.u}</p>
       </div>
-      <button class="text-xs bg-slate-900 text-white px-3 py-1.5 rounded-lg">Reabastecer</button>
+      <button onclick="abrirEntrada(${it.id})" class="text-xs bg-slate-900 text-white px-3 py-1.5 rounded-lg whitespace-nowrap">Reabastecer</button>
     </div>`;
-  }).join('') || '<p class="text-sm text-slate-400">Sin alertas. Todo el inventario está en nivel OK. 🎉</p>';
+  }).join('') || '<p class="text-sm text-slate-400 bg-white border border-slate-200 rounded-xl p-4">Sin alertas. Todo el inventario está en nivel OK. 🎉</p>';
 }
+
+// ---- Canales de notificación ----
+function renderCanales(){
+  document.getElementById('canal-email-dest').textContent = notif.email;
+  document.getElementById('canal-wa-dest').textContent = notif.wa;
+  const set=(id,on)=>{ const e=document.getElementById(id); e.textContent=on?'Activo':'Inactivo'; e.className='text-[11px] px-2 py-0.5 rounded-full '+(on?'text-emerald-700 bg-emerald-50':'text-slate-500 bg-slate-100'); };
+  set('canal-email-estado', notif.emailOn);
+  set('canal-wa-estado', notif.waOn);
+}
+function abrirAlertasConfig(){
+  document.getElementById('cfg-email').value = notif.email;
+  document.getElementById('cfg-wa').value = notif.wa;
+  document.getElementById('cfg-email-on').checked = notif.emailOn;
+  document.getElementById('cfg-wa-on').checked = notif.waOn;
+  abrirModal('modal-alertas-cfg');
+}
+function guardarNotif(){
+  notif.email = document.getElementById('cfg-email').value || notif.email;
+  notif.wa = document.getElementById('cfg-wa').value || notif.wa;
+  notif.emailOn = document.getElementById('cfg-email-on').checked;
+  notif.waOn = document.getElementById('cfg-wa-on').checked;
+  renderCanales(); cerrarModal('modal-alertas-cfg'); toast('Canales actualizados');
+}
+function enviarAlertas(){
+  const al = INV.filter(it=>nivel(it)!=='ok');
+  if(al.length===0){ toast('No hay insumos por reabastecer 🎉'); return; }
+  const destinos = [];
+  if(notif.emailOn) destinos.push('📧 '+notif.email);
+  if(notif.waOn) destinos.push('📱 '+notif.wa);
+  if(destinos.length===0){ toast('Activa al menos un canal en "Configurar"'); return; }
+  toast('Alerta de '+al.length+' insumo(s) enviada a '+destinos.join(' y '));
+}
+
+// ---- CRUD / entradas ----
+function crearInsumo(){
+  const n = document.getElementById('ins-nombre').value.trim();
+  if(!n){ toast('Escribe el nombre del insumo'); return; }
+  const u = document.getElementById('ins-unidad').value;
+  const stock = +document.getElementById('ins-stock').value||0;
+  const min = +document.getElementById('ins-min').value||0;
+  INV.push({ id:Date.now(), n, u, stock, min });
+  document.getElementById('ins-nombre').value=''; document.getElementById('ins-stock').value=''; document.getElementById('ins-min').value='';
+  cerrarModal('modal-insumo'); refrescarInv();
+  const it = INV[INV.length-1];
+  if(nivel(it)!=='ok'){ toast('"'+n+'" guardado · stock bajo, se notificará'); enviarAlertas(); }
+  else toast('"'+n+'" agregado al inventario');
+}
+function abrirEntrada(id){
+  const sel = document.getElementById('ent-insumo');
+  sel.innerHTML = INV.map(it=>`<option value="${it.id}">${it.n} (${it.stock} ${it.u})</option>`).join('');
+  if(id) sel.value = id;
+  entUnidad(); document.getElementById('ent-cant').value='';
+  abrirModal('modal-entrada');
+}
+function entUnidad(){
+  const it = INV.find(x=>x.id==document.getElementById('ent-insumo').value);
+  document.getElementById('ent-u').textContent = it ? it.u : '';
+}
+function registrarEntrada(){
+  const it = INV.find(x=>x.id==document.getElementById('ent-insumo').value);
+  const cant = +document.getElementById('ent-cant').value||0;
+  if(!it || cant<=0){ toast('Indica una cantidad válida'); return; }
+  const eraAlerta = nivel(it)!=='ok';
+  it.stock += cant;
+  cerrarModal('modal-entrada'); refrescarInv();
+  if(eraAlerta && nivel(it)==='ok') toast('+'+cant+' '+it.u+' · "'+it.n+'" vuelve a nivel OK ✅');
+  else toast('Entrada registrada: +'+cant+' '+it.u+' de '+it.n);
+}
+function refrescarInv(){ renderInventario(); renderAlertas(); renderCanales(); }
 
 // ===================== REPORTES =====================
 function renderReportes(){
@@ -565,7 +771,8 @@ function buildNav(){
 }
 
 // ===================== INIT =====================
-buildNav(); renderMesas(); renderInventario(); renderAlertas(); renderReportes();
+document.getElementById('ins-unidad').innerHTML = UNIDADES.map(u=>`<option>${u}</option>`).join('');
+buildNav(); renderMesas(); renderInventario(); renderAlertas(); renderCanales(); renderReportes();
 irA('login');
 </script>
 </body>
