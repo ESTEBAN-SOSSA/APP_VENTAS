@@ -26,26 +26,26 @@ Definir la composición de los productos preparados para descontar automáticame
 
 ## Mapa de recetas del demo (producto → insumos)
 
-Correspondencia usada en el [mockup](../../index.html). Las cantidades están en la unidad base del insumo.
+Correspondencia usada en el [mockup](../../index.html). Todo en **cantidades** (unidades/porciones enteras), sin conversión de ml/kg.
 
 | Producto | Tipo | Insumos descontados por unidad vendida |
 |---|---|---|
-| Cerveza Nacional | directo | 1 und cerveza nacional |
-| Cerveza Importada | directo | 1 und cerveza importada |
-| Michelada | preparado | 1 und cerveza nacional + 1 limón |
-| Cuba Libre | preparado | 60 ml ron + 200 ml gaseosa + 1 limón |
-| Mojito | preparado | 50 ml ron + 2 limón + 0.05 kg hielo |
-| Margarita | preparado | 45 ml tequila + 20 ml triple sec + 1 limón |
-| Gin Tonic | preparado | 50 ml ginebra + 1 agua tónica + 1 limón |
-| Aguardiente (trago) | directo | 30 ml aguardiente |
-| Ron (trago) | directo | 45 ml ron |
-| Whisky (trago) | directo | 45 ml whisky |
-| Picada personal | directo | 0.25 kg papa a la francesa |
-| Picada para 2 | directo | 0.5 kg papa a la francesa |
-| Alitas x6 | directo | 0.2 kg papa a la francesa |
-| Gaseosa | directo | 1 lata gaseosa 350 ml |
+| Cerveza Nacional | directo | 1 cerveza nacional |
+| Cerveza Importada | directo | 1 cerveza importada |
+| Michelada | preparado | 1 cerveza nacional + 1 limón |
+| Cuba Libre | preparado | 1 ron + 1 gaseosa + 1 limón |
+| Mojito | preparado | 1 ron + 2 limón + 1 hielo |
+| Margarita | preparado | 1 tequila + 1 triple sec + 1 limón |
+| Gin Tonic | preparado | 1 ginebra + 1 agua tónica + 1 limón |
+| Aguardiente (trago) | directo | 1 aguardiente |
+| Ron (trago) | directo | 1 ron |
+| Whisky (trago) | directo | 1 whisky |
+| Picada personal | directo | 1 papa a la francesa |
+| Picada para 2 | directo | 2 papa a la francesa |
+| Alitas x6 | directo | 1 papa a la francesa |
+| Gaseosa | directo | 1 gaseosa lata 350 ml |
 | Agua | directo | 1 agua embotellada |
-| Jugo natural | preparado | 1 fruta + 0.05 kg hielo |
+| Jugo natural | preparado | 1 fruta + 1 hielo |
 
 > En el mockup, al **confirmar el pago** se descuentan estos insumos del inventario; si el stock no alcanza, la comanda muestra un aviso de **stock insuficiente**; y si un insumo cruza su tope, se dispara la **alerta** ([M05](M05-alertas-stock.md)) por correo/WhatsApp.
 

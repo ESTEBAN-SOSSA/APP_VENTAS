@@ -221,7 +221,7 @@
 
         <div class="grid grid-cols-3 gap-3 mb-4">
           <div class="bg-white rounded-xl border border-slate-200 p-3 text-center"><p class="text-2xl font-bold text-emerald-600" id="kpi-ok">0</p><p class="text-xs text-slate-500">En nivel OK</p></div>
-          <div class="bg-white rounded-xl border border-slate-200 p-3 text-center"><p class="text-2xl font-bold text-amber-500" id="kpi-bajo">0</p><p class="text-xs text-slate-500">Stock bajo</p></div>
+          <div class="bg-white rounded-xl border border-slate-200 p-3 text-center"><p class="text-2xl font-bold text-amber-500" id="kpi-bajo">0</p><p class="text-xs text-slate-500">Llegando al tope</p></div>
           <div class="bg-white rounded-xl border border-slate-200 p-3 text-center"><p class="text-2xl font-bold text-rose-600" id="kpi-critico">0</p><p class="text-xs text-slate-500">Crítico</p></div>
         </div>
 
@@ -276,7 +276,8 @@
               <span id="canal-wa-estado" class="text-[11px] px-2 py-0.5 rounded-full text-emerald-700 bg-emerald-50">Activo</span>
             </div>
           </div>
-          <button onclick="enviarAlertas()" class="w-full mt-3 bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold rounded-lg py-2.5">Enviar alertas ahora</button>
+          <p class="text-xs text-slate-500 mt-3">⏰ Aviso anticipado cuando el stock esté llegando al tope (margen <span id="canal-margen" class="font-semibold text-slate-700">30%</span>).</p>
+          <button onclick="enviarAlertas()" class="w-full mt-2 bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold rounded-lg py-2.5">Enviar alertas ahora</button>
         </div>
 
         <div class="flex items-center justify-between mb-2">
@@ -350,18 +351,18 @@
     <h3 class="font-bold text-lg mb-3">Nuevo insumo</h3>
     <label class="block text-sm font-medium mb-1">Nombre</label>
     <input id="ins-nombre" class="w-full border border-slate-300 rounded-lg px-3 py-2.5 mb-3 outline-none focus:ring-2 focus:ring-marca-400" placeholder="Ej. Ginebra" />
-    <div class="grid grid-cols-2 gap-3 mb-3">
+    <div class="grid grid-cols-2 gap-3 mb-4">
       <div>
-        <label class="block text-sm font-medium mb-1">Unidad</label>
-        <select id="ins-unidad" class="w-full border border-slate-300 rounded-lg px-3 py-2.5 outline-none focus:ring-2 focus:ring-marca-400"></select>
+        <label class="block text-sm font-medium mb-1">Cantidad actual</label>
+        <input id="ins-stock" type="number" min="0" class="w-full border border-slate-300 rounded-lg px-3 py-2.5 outline-none focus:ring-2 focus:ring-marca-400" placeholder="0" />
+        <p class="text-[11px] text-slate-400 mt-1">unidades en stock</p>
       </div>
       <div>
-        <label class="block text-sm font-medium mb-1">Stock inicial</label>
-        <input id="ins-stock" type="number" min="0" class="w-full border border-slate-300 rounded-lg px-3 py-2.5 outline-none focus:ring-2 focus:ring-marca-400" placeholder="0" />
+        <label class="block text-sm font-medium mb-1">Tope mínimo</label>
+        <input id="ins-min" type="number" min="0" class="w-full border border-slate-300 rounded-lg px-3 py-2.5 outline-none focus:ring-2 focus:ring-marca-400" placeholder="Ej. 20" />
+        <p class="text-[11px] text-slate-400 mt-1">avisa al acercarse</p>
       </div>
     </div>
-    <label class="block text-sm font-medium mb-1">Tope mínimo (alerta)</label>
-    <input id="ins-min" type="number" min="0" class="w-full border border-slate-300 rounded-lg px-3 py-2.5 mb-4 outline-none focus:ring-2 focus:ring-marca-400" placeholder="Ej. 500" />
     <div class="flex gap-2">
       <button onclick="cerrarModal('modal-insumo')" class="flex-1 border border-slate-300 rounded-lg py-2.5 font-medium">Cancelar</button>
       <button onclick="crearInsumo()" class="flex-1 bg-marca-600 text-white rounded-lg py-2.5 font-semibold">Guardar</button>
@@ -403,6 +404,16 @@
     </div>
     <input id="cfg-wa" class="w-full border border-slate-300 rounded-lg px-3 py-2.5 mb-4 outline-none focus:ring-2 focus:ring-marca-400" placeholder="+57 300 000 0000" />
 
+    <div class="border-t border-slate-100 pt-4 mb-4">
+      <label class="block text-sm font-medium mb-1">⏰ Avisar al llegar al tope</label>
+      <p class="text-xs text-slate-500 mb-2">Margen anticipado: notifica cuando el stock esté este % por encima del tope mínimo (no solo al tocarlo).</p>
+      <div class="flex items-center gap-2">
+        <input id="cfg-margen" oninput="margenEjemplo()" type="number" min="0" max="300" class="w-24 border border-slate-300 rounded-lg px-3 py-2.5 outline-none focus:ring-2 focus:ring-marca-400" />
+        <span class="text-sm text-slate-500">% sobre el tope</span>
+      </div>
+      <p id="cfg-margen-ej" class="text-[11px] text-slate-400 mt-1"></p>
+    </div>
+
     <div class="flex gap-2">
       <button onclick="cerrarModal('modal-alertas-cfg')" class="flex-1 border border-slate-300 rounded-lg py-2.5 font-medium">Cancelar</button>
       <button onclick="guardarNotif()" class="flex-1 bg-marca-600 text-white rounded-lg py-2.5 font-semibold">Guardar</button>
@@ -443,49 +454,50 @@ const MENU = {
   'Gaseosas':  [ {n:'Gaseosa',p:5000}, {n:'Agua',p:4000}, {n:'Jugo natural',p:8000} ],
 };
 
+// Inventario en CANTIDADES (unidades/porciones). stock = cantidad disponible, min = tope mínimo.
 let INV = [
-  { id:1,  n:'Ron Viejo de Caldas', u:'ml',  stock:1800, min:750 },
-  { id:2,  n:'Gaseosa cola',        u:'ml',  stock:6000, min:3000 },
-  { id:3,  n:'Limón',               u:'und', stock:8,    min:20 },
-  { id:4,  n:'Cerveza nacional',    u:'und', stock:120,  min:48 },
-  { id:5,  n:'Aguardiente',         u:'ml',  stock:400,  min:750 },
-  { id:6,  n:'Hielo',               u:'kg',  stock:3,    min:5 },
-  { id:7,  n:'Papa a la francesa',  u:'kg',  stock:14,   min:6 },
-  { id:8,  n:'Tequila',             u:'ml',  stock:950,  min:500 },
-  { id:9,  n:'Cerveza importada',   u:'und', stock:60,   min:24 },
-  { id:10, n:'Whisky',              u:'ml',  stock:1500, min:500 },
-  { id:11, n:'Ginebra',             u:'ml',  stock:900,  min:500 },
-  { id:12, n:'Agua tónica',         u:'und', stock:40,   min:12 },
-  { id:13, n:'Agua embotellada',    u:'und', stock:50,   min:12 },
-  { id:14, n:'Triple sec',          u:'ml',  stock:700,  min:300 },
-  { id:15, n:'Gaseosa lata 350ml',  u:'und', stock:80,   min:24 },
-  { id:16, n:'Fruta para jugo',     u:'und', stock:25,   min:10 },
+  { id:1,  n:'Ron (porción)',         stock:40,  min:15 },
+  { id:2,  n:'Gaseosa para mezclar',  stock:35,  min:15 },
+  { id:3,  n:'Limón',                 stock:18,  min:20 },
+  { id:4,  n:'Cerveza nacional',      stock:120, min:48 },
+  { id:5,  n:'Aguardiente (porción)', stock:12,  min:20 },
+  { id:6,  n:'Hielo (porción)',       stock:25,  min:10 },
+  { id:7,  n:'Papa a la francesa',    stock:14,  min:6 },
+  { id:8,  n:'Tequila (porción)',     stock:22,  min:10 },
+  { id:9,  n:'Cerveza importada',     stock:60,  min:24 },
+  { id:10, n:'Whisky (porción)',      stock:30,  min:10 },
+  { id:11, n:'Ginebra (porción)',     stock:18,  min:10 },
+  { id:12, n:'Agua tónica',           stock:40,  min:12 },
+  { id:13, n:'Agua embotellada',      stock:50,  min:12 },
+  { id:14, n:'Triple sec (porción)',  stock:16,  min:8 },
+  { id:15, n:'Gaseosa lata 350ml',    stock:80,  min:24 },
+  { id:16, n:'Fruta para jugo',       stock:25,  min:10 },
 ];
-const UNIDADES = ['ml','oz','gr','und','kg','botella','paquete'];
 
-// ===== RECETAS: mapa producto → insumos (cantidad en unidad base del insumo) =====
+// ===== RECETAS: mapa producto → insumos (en CANTIDADES) =====
 const RECETAS = {
   'Cerveza Nacional':    [ {id:4,c:1} ],
   'Cerveza Importada':   [ {id:9,c:1} ],
   'Michelada':           [ {id:4,c:1}, {id:3,c:1} ],
-  'Cuba Libre':          [ {id:1,c:60}, {id:2,c:200}, {id:3,c:1} ],
-  'Mojito':              [ {id:1,c:50}, {id:3,c:2}, {id:6,c:0.05} ],
-  'Margarita':           [ {id:8,c:45}, {id:14,c:20}, {id:3,c:1} ],
-  'Gin Tonic':           [ {id:11,c:50}, {id:12,c:1}, {id:3,c:1} ],
-  'Aguardiente (trago)': [ {id:5,c:30} ],
-  'Ron (trago)':         [ {id:1,c:45} ],
-  'Whisky (trago)':      [ {id:10,c:45} ],
-  'Picada personal':     [ {id:7,c:0.25} ],
-  'Picada para 2':       [ {id:7,c:0.5} ],
-  'Alitas x6':           [ {id:7,c:0.2} ],
+  'Cuba Libre':          [ {id:1,c:1}, {id:2,c:1}, {id:3,c:1} ],
+  'Mojito':              [ {id:1,c:1}, {id:3,c:2}, {id:6,c:1} ],
+  'Margarita':           [ {id:8,c:1}, {id:14,c:1}, {id:3,c:1} ],
+  'Gin Tonic':           [ {id:11,c:1}, {id:12,c:1}, {id:3,c:1} ],
+  'Aguardiente (trago)': [ {id:5,c:1} ],
+  'Ron (trago)':         [ {id:1,c:1} ],
+  'Whisky (trago)':      [ {id:10,c:1} ],
+  'Picada personal':     [ {id:7,c:1} ],
+  'Picada para 2':       [ {id:7,c:2} ],
+  'Alitas x6':           [ {id:7,c:1} ],
   'Gaseosa':             [ {id:15,c:1} ],
   'Agua':                [ {id:13,c:1} ],
-  'Jugo natural':        [ {id:16,c:1}, {id:6,c:0.05} ],
+  'Jugo natural':        [ {id:16,c:1}, {id:6,c:1} ],
 };
 const r2 = n => Math.round(n*100)/100;
 
-// Configuración de notificaciones (correo / WhatsApp)
-let notif = { emailOn:true, email:'dev@edemco.co', waOn:true, wa:'+57 300 123 4567' };
+// Configuración de notificaciones (correo / WhatsApp) y margen de aviso anticipado
+// margen = % por encima del tope al que empieza a avisar que "está llegando al tope"
+let notif = { emailOn:true, email:'dev@edemco.co', waOn:true, wa:'+57 300 123 4567', margen:30 };
 
 const TOP = [ {n:'Cerveza Nacional',v:312}, {n:'Cuba Libre',v:188}, {n:'Picada para 2',v:96}, {n:'Mojito',v:74} ];
 const HORAS = [3,5,8,6,9,14,22,28,33,40,31,18];
@@ -651,7 +663,7 @@ function faltantes(items){
   const need = consumoPedido(items); const falta=[];
   Object.keys(need).forEach(id=>{
     const it = INV.find(x=>x.id==id);
-    if(it && need[id] > it.stock) falta.push({ n:it.n, falta:r2(need[id]-it.stock), u:it.u });
+    if(it && need[id] > it.stock) falta.push({ n:it.n, falta:r2(need[id]-it.stock), u:'uds' });
   });
   return falta;
 }
@@ -681,9 +693,10 @@ function confirmarPago(){
 }
 
 // ===================== INVENTARIO =====================
+// Estado según el tope y el margen de aviso configurable
 function nivel(it){
-  if(it.stock<=it.min) return 'critico';
-  if(it.stock<=it.min*1.5) return 'bajo';
+  if(it.stock<=it.min) return 'critico';                       // en o bajo el tope
+  if(it.stock<=it.min*(1+(notif.margen||0)/100)) return 'bajo'; // llegando al tope
   return 'ok';
 }
 function renderInventario(){
@@ -694,11 +707,11 @@ function renderInventario(){
   document.getElementById('tbody-inv').innerHTML = lista.map(it=>{
     const nv = nivel(it);
     const badge = { ok:'text-emerald-700 bg-emerald-50', bajo:'text-amber-700 bg-amber-50', critico:'text-rose-700 bg-rose-50' }[nv];
-    const txt = { ok:'OK', bajo:'Bajo', critico:'Crítico' }[nv];
+    const txt = { ok:'OK', bajo:'Llegando', critico:'Crítico' }[nv];
     return `<tr>
       <td class="px-4 py-2.5 font-medium text-slate-800">${it.n}</td>
-      <td class="px-3 py-2.5 text-right">${it.stock} <span class="text-slate-400 text-xs">${it.u}</span></td>
-      <td class="px-3 py-2.5 text-right text-slate-400 hidden sm:table-cell">${it.min} ${it.u}</td>
+      <td class="px-3 py-2.5 text-right font-semibold">${it.stock} <span class="text-slate-400 text-xs font-normal">uds</span></td>
+      <td class="px-3 py-2.5 text-right text-slate-400 hidden sm:table-cell">${it.min} uds</td>
       <td class="px-3 py-2.5 text-center"><span class="text-xs px-2 py-0.5 rounded-full ${badge}">${txt}</span></td>
       <td class="px-4 py-2.5 text-right"><button onclick="abrirEntrada(${it.id})" class="text-xs border border-slate-300 hover:bg-slate-50 px-2.5 py-1 rounded-lg font-medium">+ Entrada</button></td>
     </tr>`;
@@ -719,7 +732,7 @@ function renderAlertas(){
       <div class="w-10 h-10 rounded-full grid place-items-center ${crit?'bg-rose-100':'bg-amber-100'}">${crit?'🔴':'🟡'}</div>
       <div class="flex-1 min-w-0">
         <p class="font-semibold text-slate-800">${it.n}</p>
-        <p class="text-xs text-slate-500">Quedan ${it.stock} ${it.u} · tope ${it.min} ${it.u} · sugerido pedir ${sugerido} ${it.u}</p>
+        <p class="text-xs text-slate-500">Quedan ${it.stock} uds · tope ${it.min} uds · sugerido pedir ${sugerido} uds</p>
       </div>
       <button onclick="abrirEntrada(${it.id})" class="text-xs bg-slate-900 text-white px-3 py-1.5 rounded-lg whitespace-nowrap">Reabastecer</button>
     </div>`;
@@ -730,6 +743,7 @@ function renderAlertas(){
 function renderCanales(){
   document.getElementById('canal-email-dest').textContent = notif.email;
   document.getElementById('canal-wa-dest').textContent = notif.wa;
+  document.getElementById('canal-margen').textContent = notif.margen+'%';
   const set=(id,on)=>{ const e=document.getElementById(id); e.textContent=on?'Activo':'Inactivo'; e.className='text-[11px] px-2 py-0.5 rounded-full '+(on?'text-emerald-700 bg-emerald-50':'text-slate-500 bg-slate-100'); };
   set('canal-email-estado', notif.emailOn);
   set('canal-wa-estado', notif.waOn);
@@ -739,14 +753,21 @@ function abrirAlertasConfig(){
   document.getElementById('cfg-wa').value = notif.wa;
   document.getElementById('cfg-email-on').checked = notif.emailOn;
   document.getElementById('cfg-wa-on').checked = notif.waOn;
+  document.getElementById('cfg-margen').value = notif.margen;
+  margenEjemplo();
   abrirModal('modal-alertas-cfg');
+}
+function margenEjemplo(){
+  const m = +document.getElementById('cfg-margen').value||0;
+  document.getElementById('cfg-margen-ej').textContent = `Ej.: con tope 20, avisa al llegar a ${Math.round(20*(1+m/100))} uds o menos.`;
 }
 function guardarNotif(){
   notif.email = document.getElementById('cfg-email').value || notif.email;
   notif.wa = document.getElementById('cfg-wa').value || notif.wa;
   notif.emailOn = document.getElementById('cfg-email-on').checked;
   notif.waOn = document.getElementById('cfg-wa-on').checked;
-  renderCanales(); cerrarModal('modal-alertas-cfg'); toast('Canales actualizados');
+  notif.margen = Math.max(0, +document.getElementById('cfg-margen').value||0);
+  renderCanales(); refrescarInv(); cerrarModal('modal-alertas-cfg'); toast('Configuración de alertas actualizada');
 }
 function enviarAlertas(){
   const al = INV.filter(it=>nivel(it)!=='ok');
@@ -762,10 +783,9 @@ function enviarAlertas(){
 function crearInsumo(){
   const n = document.getElementById('ins-nombre').value.trim();
   if(!n){ toast('Escribe el nombre del insumo'); return; }
-  const u = document.getElementById('ins-unidad').value;
   const stock = +document.getElementById('ins-stock').value||0;
   const min = +document.getElementById('ins-min').value||0;
-  INV.push({ id:Date.now(), n, u, stock, min });
+  INV.push({ id:Date.now(), n, stock, min });
   document.getElementById('ins-nombre').value=''; document.getElementById('ins-stock').value=''; document.getElementById('ins-min').value='';
   cerrarModal('modal-insumo'); refrescarInv();
   const it = INV[INV.length-1];
@@ -774,14 +794,14 @@ function crearInsumo(){
 }
 function abrirEntrada(id){
   const sel = document.getElementById('ent-insumo');
-  sel.innerHTML = INV.map(it=>`<option value="${it.id}">${it.n} (${it.stock} ${it.u})</option>`).join('');
+  sel.innerHTML = INV.map(it=>`<option value="${it.id}">${it.n} (${it.stock} uds)</option>`).join('');
   if(id) sel.value = id;
   entUnidad(); document.getElementById('ent-cant').value='';
   abrirModal('modal-entrada');
 }
 function entUnidad(){
   const it = INV.find(x=>x.id==document.getElementById('ent-insumo').value);
-  document.getElementById('ent-u').textContent = it ? it.u : '';
+  document.getElementById('ent-u').textContent = it ? 'uds' : '';
 }
 function registrarEntrada(){
   const it = INV.find(x=>x.id==document.getElementById('ent-insumo').value);
@@ -790,8 +810,8 @@ function registrarEntrada(){
   const eraAlerta = nivel(it)!=='ok';
   it.stock += cant;
   cerrarModal('modal-entrada'); refrescarInv();
-  if(eraAlerta && nivel(it)==='ok') toast('+'+cant+' '+it.u+' · "'+it.n+'" vuelve a nivel OK ✅');
-  else toast('Entrada registrada: +'+cant+' '+it.u+' de '+it.n);
+  if(eraAlerta && nivel(it)==='ok') toast('+'+cant+' uds · "'+it.n+'" vuelve a nivel OK ✅');
+  else toast('Entrada registrada: +'+cant+' uds de '+it.n);
 }
 function refrescarInv(){ renderInventario(); renderAlertas(); renderCanales(); }
 
@@ -847,7 +867,6 @@ function buildNav(){
 }
 
 // ===================== INIT =====================
-document.getElementById('ins-unidad').innerHTML = UNIDADES.map(u=>`<option>${u}</option>`).join('');
 buildNav(); renderMesas(); renderInventario(); renderAlertas(); renderCanales(); renderReportes();
 irA('login');
 </script>
