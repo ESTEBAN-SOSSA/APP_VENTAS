@@ -157,6 +157,7 @@
                 <div class="flex justify-between"><span class="text-slate-500">INC (8%)</span><span id="t-inc">$0</span></div>
                 <div class="flex justify-between font-bold text-base pt-1"><span>Total</span><span id="t-total" class="text-marca-700">$0</span></div>
               </div>
+              <div id="ticket-warn" class="hidden mt-3 text-xs bg-amber-50 text-amber-800 border border-amber-200 rounded-lg px-3 py-2"></div>
               <button onclick="irACobro()" class="w-full mt-4 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-lg py-2.5 transition disabled:opacity-40" id="btn-cobrar">Ir a cobrar</button>
             </div>
           </div>
@@ -443,16 +444,45 @@ const MENU = {
 };
 
 let INV = [
-  { id:1, n:'Ron Viejo de Caldas', u:'ml',  stock:1800, min:750 },
-  { id:2, n:'Gaseosa cola 1.5L',   u:'und', stock:6,    min:12 },
-  { id:3, n:'Limón',               u:'und', stock:8,    min:20 },
-  { id:4, n:'Cerveza nacional',    u:'und', stock:120,  min:48 },
-  { id:5, n:'Aguardiente',         u:'ml',  stock:400,  min:750 },
-  { id:6, n:'Hielo',               u:'kg',  stock:3,    min:5 },
-  { id:7, n:'Papa a la francesa',  u:'kg',  stock:14,   min:6 },
-  { id:8, n:'Tequila',             u:'ml',  stock:950,  min:500 },
+  { id:1,  n:'Ron Viejo de Caldas', u:'ml',  stock:1800, min:750 },
+  { id:2,  n:'Gaseosa cola',        u:'ml',  stock:6000, min:3000 },
+  { id:3,  n:'Limón',               u:'und', stock:8,    min:20 },
+  { id:4,  n:'Cerveza nacional',    u:'und', stock:120,  min:48 },
+  { id:5,  n:'Aguardiente',         u:'ml',  stock:400,  min:750 },
+  { id:6,  n:'Hielo',               u:'kg',  stock:3,    min:5 },
+  { id:7,  n:'Papa a la francesa',  u:'kg',  stock:14,   min:6 },
+  { id:8,  n:'Tequila',             u:'ml',  stock:950,  min:500 },
+  { id:9,  n:'Cerveza importada',   u:'und', stock:60,   min:24 },
+  { id:10, n:'Whisky',              u:'ml',  stock:1500, min:500 },
+  { id:11, n:'Ginebra',             u:'ml',  stock:900,  min:500 },
+  { id:12, n:'Agua tónica',         u:'und', stock:40,   min:12 },
+  { id:13, n:'Agua embotellada',    u:'und', stock:50,   min:12 },
+  { id:14, n:'Triple sec',          u:'ml',  stock:700,  min:300 },
+  { id:15, n:'Gaseosa lata 350ml',  u:'und', stock:80,   min:24 },
+  { id:16, n:'Fruta para jugo',     u:'und', stock:25,   min:10 },
 ];
 const UNIDADES = ['ml','oz','gr','und','kg','botella','paquete'];
+
+// ===== RECETAS: mapa producto → insumos (cantidad en unidad base del insumo) =====
+const RECETAS = {
+  'Cerveza Nacional':    [ {id:4,c:1} ],
+  'Cerveza Importada':   [ {id:9,c:1} ],
+  'Michelada':           [ {id:4,c:1}, {id:3,c:1} ],
+  'Cuba Libre':          [ {id:1,c:60}, {id:2,c:200}, {id:3,c:1} ],
+  'Mojito':              [ {id:1,c:50}, {id:3,c:2}, {id:6,c:0.05} ],
+  'Margarita':           [ {id:8,c:45}, {id:14,c:20}, {id:3,c:1} ],
+  'Gin Tonic':           [ {id:11,c:50}, {id:12,c:1}, {id:3,c:1} ],
+  'Aguardiente (trago)': [ {id:5,c:30} ],
+  'Ron (trago)':         [ {id:1,c:45} ],
+  'Whisky (trago)':      [ {id:10,c:45} ],
+  'Picada personal':     [ {id:7,c:0.25} ],
+  'Picada para 2':       [ {id:7,c:0.5} ],
+  'Alitas x6':           [ {id:7,c:0.2} ],
+  'Gaseosa':             [ {id:15,c:1} ],
+  'Agua':                [ {id:13,c:1} ],
+  'Jugo natural':        [ {id:16,c:1}, {id:6,c:0.05} ],
+};
+const r2 = n => Math.round(n*100)/100;
 
 // Configuración de notificaciones (correo / WhatsApp)
 let notif = { emailOn:true, email:'dev@edemco.co', waOn:true, wa:'+57 300 123 4567' };
@@ -521,11 +551,16 @@ function setCat(c){ catActual=c; renderCats(); renderProductos(); }
 
 function renderProductos(){
   const g = document.getElementById('grid-productos');
-  g.innerHTML = MENU[catActual].map(p=>`
+  g.innerHTML = MENU[catActual].map(p=>{
+    const r = RECETAS[p.n];
+    const tag = r ? (r.length>1 ? '🍹 preparado' : '📦 directo') : '';
+    return `
     <button onclick="addItem('${p.n.replace(/'/g,"")}',${p.p})" class="bg-white rounded-xl border border-slate-200 p-3 text-left hover:border-marca-400 hover:shadow-sm transition active:scale-95">
       <p class="font-medium text-sm text-slate-800 leading-tight">${p.n}</p>
       <p class="text-marca-700 font-bold mt-1">${peso(p.p)}</p>
-    </button>`).join('');
+      ${tag?`<p class="text-[10px] text-slate-400 mt-0.5">${tag}</p>`:''}
+    </button>`;
+  }).join('');
 }
 
 function addItem(n,p){
@@ -569,6 +604,13 @@ function renderTicket(){
   document.getElementById('t-inc').textContent = peso(t.inc);
   document.getElementById('t-total').textContent = peso(t.total);
   const m = mesas.find(x=>x.id===mesaActual); if(m) m.total = t.total;
+  // aviso de stock insuficiente según recetas
+  const warn = document.getElementById('ticket-warn');
+  const falta = faltantes(pedido);
+  if(falta.length){
+    warn.classList.remove('hidden');
+    warn.innerHTML = '⚠ Stock insuficiente: ' + falta.map(f=>`${f.n} (faltan ${f.falta} ${f.u})`).join(', ');
+  } else warn.classList.add('hidden');
 }
 
 // ===================== COBRO =====================
@@ -596,11 +638,45 @@ function calcCambio(){
   const recibe = +document.getElementById('recibe').value.replace(/\D/g,'')||0;
   document.getElementById('cambio').textContent = peso(Math.max(0, recibe-totalCobro));
 }
+// ---- Consumo de insumos según recetas ----
+function consumoPedido(items){
+  const map = {}; // {insumoId: cantidadBase}
+  items.forEach(it=>{
+    const r = RECETAS[it.n]; if(!r) return;
+    r.forEach(c=>{ map[c.id] = (map[c.id]||0) + c.c*it.qty; });
+  });
+  return map;
+}
+function faltantes(items){
+  const need = consumoPedido(items); const falta=[];
+  Object.keys(need).forEach(id=>{
+    const it = INV.find(x=>x.id==id);
+    if(it && need[id] > it.stock) falta.push({ n:it.n, falta:r2(need[id]-it.stock), u:it.u });
+  });
+  return falta;
+}
+function descontarInventario(items){
+  const need = consumoPedido(items);
+  const antes = {}; INV.forEach(it=>antes[it.id]=nivel(it));
+  Object.keys(need).forEach(id=>{
+    const it = INV.find(x=>x.id==id);
+    if(it) it.stock = Math.max(0, r2(it.stock - need[id]));
+  });
+  return INV.filter(it=> antes[it.id]==='ok' && nivel(it)!=='ok'); // nuevas alertas
+}
+function enviarAlertasDe(list){
+  const destinos=[]; if(notif.emailOn)destinos.push('📧 '+notif.email); if(notif.waOn)destinos.push('📱 '+notif.wa);
+  if(!destinos.length || !list.length) return;
+  toast('⚠ '+list.map(i=>i.n).join(', ')+' bajo tope · alerta enviada a '+destinos.join(' y '));
+}
+
 function confirmarPago(){
+  const nuevas = descontarInventario(pedido);
   const m = mesas.find(x=>x.id===mesaActual);
   m.estado='libre'; m.total=0; pedido=[];
-  toast('✅ Pago confirmado · recibo impreso');
-  renderMesas();
+  refrescarInv(); renderMesas();
+  toast('✅ Pago confirmado · inventario descontado · recibo impreso');
+  if(nuevas.length) setTimeout(()=>enviarAlertasDe(nuevas), 1700);
   setTimeout(()=>irA('mesas'), 700);
 }
 
