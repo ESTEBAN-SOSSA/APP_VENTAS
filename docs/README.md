@@ -11,6 +11,9 @@ Esta carpeta organiza el [levantamiento de requerimientos](../levantamiento_sist
 
 ## Índice
 
+- [Arquitectura del sistema](arquitectura.md) — vista general, stack, backend/frontend, tiempo real, despliegue y ramas.
+- [Modelo de datos](modelo-de-datos.md) — entidades y relaciones.
+
 ### Módulos funcionales (`docs/modulos/`)
 
 | ID | Módulo | Fase |
