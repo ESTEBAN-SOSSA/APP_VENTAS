@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#0f172a" />
+<title>TabernaPOS — Mockup interactivo</title>
+<meta name="description" content="Prototipo navegable del sistema de ventas e inventario para bar/taberna. Responsive (celular, tablet, PC)." />
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          marca: { 50:'#fff7ed',100:'#ffedd5',400:'#fb923c',500:'#f59e0b',600:'#d97706',700:'#b45309' },
+        }
+      }
+    }
+  }
+</script>
+<style>
+  html,body{ -webkit-tap-highlight-color: transparent; }
+  ::-webkit-scrollbar{ width:8px; height:8px; }
+  ::-webkit-scrollbar-thumb{ background:#cbd5e1; border-radius:8px; }
+  .screen{ display:none; }
+  .screen.active{ display:block; animation: fade .25s ease; }
+  @keyframes fade{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:none;} }
+  .nav-link.active{ background:#1e293b; color:#fbbf24; }
+  .nav-link.active svg{ color:#fbbf24; }
+</style>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased">
+
+<!-- ===== APP SHELL ===== -->
+<div id="app" class="min-h-screen flex flex-col lg:flex-row">
+
+  <!-- ===== SIDEBAR (desktop) ===== -->
+  <aside class="hidden lg:flex lg:flex-col w-64 bg-slate-900 text-slate-300 shrink-0">
+    <div class="px-5 py-5 border-b border-slate-800 flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-marca-500 grid place-items-center text-slate-900 font-black text-lg">🍺</div>
+      <div>
+        <p class="text-white font-bold leading-tight">TabernaPOS</p>
+        <p class="text-xs text-slate-400">Bar · Taberna · Tienda</p>
+      </div>
+    </div>
+    <nav class="flex-1 p-3 space-y-1" id="sidebar-nav"></nav>
+    <div class="p-3 border-t border-slate-800">
+      <div class="flex items-center gap-3 px-2 py-2">
+        <div class="w-9 h-9 rounded-full bg-marca-600 grid place-items-center text-white font-bold text-sm">CA</div>
+        <div class="min-w-0">
+          <p class="text-sm text-white font-medium truncate">Carlos Admin</p>
+          <p class="text-xs text-slate-400">Administrador</p>
+        </div>
+      </div>
+      <button onclick="irA('login')" class="w-full mt-1 text-left text-xs text-slate-400 hover:text-white px-2 py-1.5">Cerrar sesión</button>
+    </div>
+  </aside>
+
+  <!-- ===== CONTENIDO ===== -->
+  <div class="flex-1 flex flex-col min-w-0">
+
+    <!-- Header móvil/tablet -->
+    <header class="lg:hidden sticky top-0 z-20 bg-slate-900 text-white px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-lg bg-marca-500 grid place-items-center text-slate-900 font-black">🍺</div>
+        <span class="font-bold">TabernaPOS</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <button onclick="irA('alertas')" class="relative">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2a2 2 0 01-.6 1.4L4 17h5m6 0v1a3 3 0 11-6 0v-1"/></svg>
+          <span class="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 rounded-full text-[10px] grid place-items-center font-bold">3</span>
+        </button>
+        <div class="w-8 h-8 rounded-full bg-marca-600 grid place-items-center text-white font-bold text-xs">CA</div>
+      </div>
+    </header>
+
+    <!-- Banner demo -->
+    <div class="bg-amber-100 text-amber-900 text-xs sm:text-sm px-4 py-2 text-center border-b border-amber-200">
+      🧪 <strong>Mockup de demostración</strong> — datos de ejemplo. Toca las mesas, arma una comanda y ve al cobro. Responsive: celular · tablet · PC.
+    </div>
+
+    <main class="flex-1 p-4 sm:p-6 pb-24 lg:pb-6 max-w-6xl w-full mx-auto">
+
+      <!-- ====================== LOGIN ====================== -->
+      <section id="login" class="screen">
+        <div class="min-h-[70vh] grid place-items-center">
+          <div class="w-full max-w-sm bg-white rounded-2xl shadow-xl p-6 sm:p-8">
+            <div class="text-center mb-6">
+              <div class="w-16 h-16 mx-auto rounded-2xl bg-marca-500 grid place-items-center text-3xl">🍺</div>
+              <h1 class="mt-3 text-xl font-bold text-slate-900">TabernaPOS</h1>
+              <p class="text-sm text-slate-500">Ingresa para continuar</p>
+            </div>
+            <label class="block text-sm font-medium mb-1">Usuario</label>
+            <input class="w-full border border-slate-300 rounded-lg px-3 py-2.5 mb-3 focus:ring-2 focus:ring-marca-400 outline-none" value="carlos.admin" />
+            <label class="block text-sm font-medium mb-1">Contraseña</label>
+            <input type="password" class="w-full border border-slate-300 rounded-lg px-3 py-2.5 mb-4 focus:ring-2 focus:ring-marca-400 outline-none" value="••••••••" />
+            <button onclick="irA('mesas')" class="w-full bg-marca-600 hover:bg-marca-700 text-white font-semibold rounded-lg py-2.5 transition">Entrar</button>
+            <div class="mt-4 text-center">
+              <p class="text-xs text-slate-400 mb-2">o ingreso rápido con PIN (meseros)</p>
+              <div class="flex justify-center gap-2">
+                <button onclick="irA('mesas')" class="w-11 h-11 rounded-lg bg-slate-100 hover:bg-slate-200 font-bold">1</button>
+                <button onclick="irA('mesas')" class="w-11 h-11 rounded-lg bg-slate-100 hover:bg-slate-200 font-bold">2</button>
+                <button onclick="irA('mesas')" class="w-11 h-11 rounded-lg bg-slate-100 hover:bg-slate-200 font-bold">3</button>
+                <button onclick="irA('mesas')" class="w-11 h-11 rounded-lg bg-slate-100 hover:bg-slate-200 font-bold">4</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====================== MESAS ====================== -->
+      <section id="mesas" class="screen">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h2 class="text-xl sm:text-2xl font-bold text-slate-900">Tablero de mesas</h2>
+            <p class="text-sm text-slate-500">Estado y total en tiempo real</p>
+          </div>
+          <button onclick="abrirModal('modal-mesa')" class="bg-marca-600 hover:bg-marca-700 text-white text-sm font-semibold rounded-lg px-3 py-2 flex items-center gap-1">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M12 5v14M5 12h14"/></svg>
+            <span class="hidden sm:inline">Agregar mesa</span>
+          </button>
+        </div>
+
+        <!-- leyenda -->
+        <div class="flex flex-wrap gap-3 mb-4 text-xs">
+          <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-emerald-500"></span>Libre</span>
+          <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-amber-500"></span>Ocupada</span>
+          <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-rose-500"></span>Por cobrar</span>
+        </div>
+
+        <div id="grid-mesas" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4"></div>
+      </section>
+
+      <!-- ====================== COMANDA ====================== -->
+      <section id="comanda" class="screen">
+        <button onclick="irA('mesas')" class="text-sm text-slate-500 hover:text-slate-800 flex items-center gap-1 mb-3">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M15 19l-7-7 7-7"/></svg> Volver a mesas
+        </button>
+        <div class="grid lg:grid-cols-3 gap-4">
+          <!-- Menú -->
+          <div class="lg:col-span-2">
+            <div class="flex items-center justify-between mb-3">
+              <h2 class="text-xl font-bold text-slate-900">Comanda · <span id="comanda-mesa">Mesa 5</span></h2>
+              <span class="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded-full">Mesero: Ana</span>
+            </div>
+            <div id="cat-tabs" class="flex gap-2 overflow-x-auto pb-2 mb-3"></div>
+            <div id="grid-productos" class="grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
+          </div>
+          <!-- Ticket -->
+          <div class="lg:col-span-1">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 lg:sticky lg:top-6">
+              <h3 class="font-bold text-slate-900 mb-3">Pedido</h3>
+              <div id="ticket-items" class="space-y-2 max-h-72 overflow-y-auto pr-1"></div>
+              <div id="ticket-vacio" class="text-center text-sm text-slate-400 py-8">Aún no hay productos.<br>Toca el menú para agregar.</div>
+              <div class="border-t border-dashed border-slate-200 mt-3 pt-3 space-y-1 text-sm">
+                <div class="flex justify-between"><span class="text-slate-500">Subtotal</span><span id="t-subtotal">$0</span></div>
+                <div class="flex justify-between"><span class="text-slate-500">INC (8%)</span><span id="t-inc">$0</span></div>
+                <div class="flex justify-between font-bold text-base pt-1"><span>Total</span><span id="t-total" class="text-marca-700">$0</span></div>
+              </div>
+              <button onclick="irACobro()" class="w-full mt-4 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-lg py-2.5 transition disabled:opacity-40" id="btn-cobrar">Ir a cobrar</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====================== CAJA / COBRO ====================== -->
+      <section id="caja" class="screen">
+        <button onclick="irA('comanda')" class="text-sm text-slate-500 hover:text-slate-800 flex items-center gap-1 mb-3">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M15 19l-7-7 7-7"/></svg> Volver a la comanda
+        </button>
+        <h2 class="text-xl sm:text-2xl font-bold text-slate-900 mb-4">Cobro · <span id="caja-mesa">Mesa 5</span></h2>
+        <div class="grid lg:grid-cols-2 gap-4">
+          <!-- Detalle -->
+          <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+            <h3 class="font-bold mb-3">Detalle de lo pedido</h3>
+            <div id="cobro-items" class="space-y-2 text-sm"></div>
+            <div class="border-t border-slate-200 mt-3 pt-3 space-y-1.5 text-sm">
+              <div class="flex justify-between"><span class="text-slate-500">Subtotal</span><span id="c-subtotal"></span></div>
+              <div class="flex justify-between"><span class="text-slate-500">INC (8%)</span><span id="c-inc"></span></div>
+              <div class="flex justify-between items-center"><span class="text-slate-500">Propina (10%)</span><span id="c-propina"></span></div>
+              <div class="flex justify-between font-bold text-lg pt-1 border-t border-slate-100 mt-1"><span>Total a cobrar</span><span id="c-total" class="text-marca-700"></span></div>
+            </div>
+          </div>
+          <!-- Pago -->
+          <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+            <h3 class="font-bold mb-3">Método de pago</h3>
+            <div class="grid grid-cols-2 gap-2 mb-4">
+              <button onclick="selMetodo(this)" class="metodo border-2 border-marca-500 bg-marca-50 rounded-xl py-3 text-sm font-medium">💵 Efectivo</button>
+              <button onclick="selMetodo(this)" class="metodo border-2 border-slate-200 rounded-xl py-3 text-sm font-medium">💳 Tarjeta</button>
+              <button onclick="selMetodo(this)" class="metodo border-2 border-slate-200 rounded-xl py-3 text-sm font-medium">📱 Nequi/QR</button>
+              <button onclick="selMetodo(this)" class="metodo border-2 border-slate-200 rounded-xl py-3 text-sm font-medium">🔀 Mixto</button>
+            </div>
+            <label class="block text-sm font-medium mb-1">Recibe</label>
+            <input id="recibe" oninput="calcCambio()" type="text" inputmode="numeric" class="w-full border border-slate-300 rounded-lg px-3 py-2.5 mb-2 outline-none focus:ring-2 focus:ring-marca-400" placeholder="$ 0" />
+            <div class="flex justify-between text-sm bg-slate-50 rounded-lg px-3 py-2 mb-4"><span class="text-slate-500">Cambio</span><span id="cambio" class="font-semibold">$0</span></div>
+            <button onclick="confirmarPago()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg py-3 transition">Confirmar pago e imprimir</button>
+            <button onclick="abrirModal('modal-dividir')" class="w-full mt-2 text-sm text-slate-500 hover:text-slate-800 py-2">Dividir la cuenta</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====================== INVENTARIO / ALERTAS ====================== -->
+      <section id="inventario" class="screen">
+        <h2 class="text-xl sm:text-2xl font-bold text-slate-900 mb-1">Inventario</h2>
+        <p class="text-sm text-slate-500 mb-4">Control de stock con alertas por tope mínimo</p>
+        <div class="grid grid-cols-3 gap-3 mb-4">
+          <div class="bg-white rounded-xl border border-slate-200 p-3 text-center"><p class="text-2xl font-bold text-emerald-600" id="kpi-ok">0</p><p class="text-xs text-slate-500">En nivel OK</p></div>
+          <div class="bg-white rounded-xl border border-slate-200 p-3 text-center"><p class="text-2xl font-bold text-amber-500" id="kpi-bajo">0</p><p class="text-xs text-slate-500">Stock bajo</p></div>
+          <div class="bg-white rounded-xl border border-slate-200 p-3 text-center"><p class="text-2xl font-bold text-rose-600" id="kpi-critico">0</p><p class="text-xs text-slate-500">Crítico</p></div>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+          <table class="w-full text-sm">
+            <thead class="bg-slate-50 text-slate-500 text-xs uppercase">
+              <tr><th class="text-left px-4 py-2.5">Insumo</th><th class="text-right px-3 py-2.5">Stock</th><th class="text-right px-3 py-2.5 hidden sm:table-cell">Mín.</th><th class="text-right px-4 py-2.5">Estado</th></tr>
+            </thead>
+            <tbody id="tbody-inv" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ====================== ALERTAS ====================== -->
+      <section id="alertas" class="screen">
+        <h2 class="text-xl sm:text-2xl font-bold text-slate-900 mb-1">Alertas de stock</h2>
+        <p class="text-sm text-slate-500 mb-4">Insumos que llegaron a su tope mínimo</p>
+        <div id="lista-alertas" class="space-y-3"></div>
+      </section>
+
+      <!-- ====================== REPORTES ====================== -->
+      <section id="reportes" class="screen">
+        <h2 class="text-xl sm:text-2xl font-bold text-slate-900 mb-1">Informes</h2>
+        <p class="text-sm text-slate-500 mb-4">Resumen del día · 29 jun 2026</p>
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+          <div class="bg-white rounded-2xl border border-slate-200 p-4"><p class="text-xs text-slate-500">Ventas del día</p><p class="text-xl sm:text-2xl font-bold text-slate-900 mt-1">$1.842.000</p><p class="text-xs text-emerald-600 mt-1">▲ 12% vs ayer</p></div>
+          <div class="bg-white rounded-2xl border border-slate-200 p-4"><p class="text-xs text-slate-500">Tickets</p><p class="text-xl sm:text-2xl font-bold text-slate-900 mt-1">47</p><p class="text-xs text-slate-400 mt-1">Prom. $39.191</p></div>
+          <div class="bg-white rounded-2xl border border-slate-200 p-4"><p class="text-xs text-slate-500">Mesas activas</p><p class="text-xl sm:text-2xl font-bold text-slate-900 mt-1">6 / 12</p><p class="text-xs text-slate-400 mt-1">50% ocupación</p></div>
+          <div class="bg-white rounded-2xl border border-slate-200 p-4"><p class="text-xs text-slate-500">Margen estimado</p><p class="text-xl sm:text-2xl font-bold text-slate-900 mt-1">62%</p><p class="text-xs text-emerald-600 mt-1">▲ saludable</p></div>
+        </div>
+        <div class="grid lg:grid-cols-2 gap-4">
+          <div class="bg-white rounded-2xl border border-slate-200 p-5">
+            <h3 class="font-bold mb-3">Ventas por hora</h3>
+            <div class="flex items-end gap-1.5 h-40" id="chart"></div>
+          </div>
+          <div class="bg-white rounded-2xl border border-slate-200 p-5">
+            <h3 class="font-bold mb-3">Más vendidos</h3>
+            <div id="top-prod" class="space-y-3"></div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<!-- ===== BOTTOM NAV (móvil/tablet) ===== -->
+<nav class="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-white border-t border-slate-200 grid grid-cols-5 text-[11px]" id="bottom-nav"></nav>
+
+<!-- ===== MODALES ===== -->
+<div id="modal-mesa" class="hidden fixed inset-0 z-50 bg-black/40 grid place-items-center p-4" onclick="cerrarModalBg(event,'modal-mesa')">
+  <div class="bg-white rounded-2xl p-5 w-full max-w-sm">
+    <h3 class="font-bold text-lg mb-3">Agregar mesa</h3>
+    <label class="block text-sm font-medium mb-1">Nombre / número</label>
+    <input id="nueva-mesa-nombre" class="w-full border border-slate-300 rounded-lg px-3 py-2.5 mb-3 outline-none focus:ring-2 focus:ring-marca-400" placeholder="Mesa 13" />
+    <label class="block text-sm font-medium mb-1">Zona</label>
+    <select id="nueva-mesa-zona" class="w-full border border-slate-300 rounded-lg px-3 py-2.5 mb-4 outline-none focus:ring-2 focus:ring-marca-400">
+      <option>Interior</option><option>Terraza</option><option>Barra</option>
+    </select>
+    <div class="flex gap-2">
+      <button onclick="cerrarModal('modal-mesa')" class="flex-1 border border-slate-300 rounded-lg py-2.5 font-medium">Cancelar</button>
+      <button onclick="crearMesa()" class="flex-1 bg-marca-600 text-white rounded-lg py-2.5 font-semibold">Agregar</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-dividir" class="hidden fixed inset-0 z-50 bg-black/40 grid place-items-center p-4" onclick="cerrarModalBg(event,'modal-dividir')">
+  <div class="bg-white rounded-2xl p-5 w-full max-w-sm">
+    <h3 class="font-bold text-lg mb-3">Dividir la cuenta</h3>
+    <p class="text-sm text-slate-500 mb-4">Elige cómo repartir el total.</p>
+    <div class="space-y-2">
+      <button onclick="cerrarModal('modal-dividir')" class="w-full border border-slate-200 rounded-lg py-3 text-left px-4 hover:bg-slate-50">⚖️ <strong>Partes iguales</strong><span class="block text-xs text-slate-500">Entre 2, 3, 4… personas</span></button>
+      <button onclick="cerrarModal('modal-dividir')" class="w-full border border-slate-200 rounded-lg py-3 text-left px-4 hover:bg-slate-50">🧾 <strong>Por ítems</strong><span class="block text-xs text-slate-500">Cada quien paga lo suyo</span></button>
+    </div>
+    <button onclick="cerrarModal('modal-dividir')" class="w-full mt-4 text-sm text-slate-500 py-2">Cerrar</button>
+  </div>
+</div>
+
+<!-- ===== TOAST ===== -->
+<div id="toast" class="hidden fixed bottom-24 lg:bottom-6 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white text-sm px-4 py-2.5 rounded-full shadow-lg"></div>
+
+<script>
+// ===================== DATOS DEMO =====================
+const peso = n => '$' + Math.round(n).toLocaleString('es-CO');
+
+const NAV = [
+  { id:'mesas',      label:'Mesas',     icon:'M4 6h16M4 10h16M4 14h16M4 18h16' },
+  { id:'inventario', label:'Inventario',icon:'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4' },
+  { id:'alertas',    label:'Alertas',   icon:'M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2a2 2 0 01-.6 1.4L4 17h5m6 0a3 3 0 11-6 0' },
+  { id:'reportes',   label:'Informes',  icon:'M3 3v18h18M7 14l3-3 3 3 5-6' },
+];
+
+let mesas = [
+  { id:1, n:'Mesa 1', zona:'Interior', estado:'libre',     total:0 },
+  { id:2, n:'Mesa 2', zona:'Interior', estado:'ocupada',   total:84000 },
+  { id:3, n:'Mesa 3', zona:'Terraza',  estado:'por_cobrar',total:152000 },
+  { id:4, n:'Mesa 4', zona:'Terraza',  estado:'libre',     total:0 },
+  { id:5, n:'Mesa 5', zona:'Interior', estado:'ocupada',   total:0 },
+  { id:6, n:'Mesa 6', zona:'Barra',    estado:'ocupada',   total:38000 },
+  { id:7, n:'Mesa 7', zona:'Barra',    estado:'libre',     total:0 },
+  { id:8, n:'Mesa 8', zona:'Terraza',  estado:'por_cobrar',total:67000 },
+];
+
+const MENU = {
+  'Cervezas':  [ {n:'Cerveza Nacional',p:7000}, {n:'Cerveza Importada',p:12000}, {n:'Michelada',p:14000} ],
+  'Cócteles':  [ {n:'Cuba Libre',p:18000}, {n:'Mojito',p:20000}, {n:'Margarita',p:22000}, {n:'Gin Tonic',p:24000} ],
+  'Licores':   [ {n:'Aguardiente (trago)',p:9000}, {n:'Ron (trago)',p:11000}, {n:'Whisky (trago)',p:19000} ],
+  'Picadas':   [ {n:'Picada personal',p:28000}, {n:'Picada para 2',p:48000}, {n:'Alitas x6',p:26000} ],
+  'Gaseosas':  [ {n:'Gaseosa',p:5000}, {n:'Agua',p:4000}, {n:'Jugo natural',p:8000} ],
+};
+
+const INV = [
+  { n:'Ron Viejo de Caldas', u:'ml',  stock:1800, min:750 },
+  { n:'Gaseosa cola 1.5L',   u:'und', stock:6,    min:12 },
+  { n:'Limón',               u:'und', stock:8,    min:20 },
+  { n:'Cerveza nacional',    u:'und', stock:120,  min:48 },
+  { n:'Aguardiente',         u:'ml',  stock:400,  min:750 },
+  { n:'Hielo',               u:'kg',  stock:3,    min:5 },
+  { n:'Papa a la francesa',  u:'kg',  stock:14,   min:6 },
+  { n:'Tequila',             u:'ml',  stock:950,  min:500 },
+];
+
+const TOP = [ {n:'Cerveza Nacional',v:312}, {n:'Cuba Libre',v:188}, {n:'Picada para 2',v:96}, {n:'Mojito',v:74} ];
+const HORAS = [3,5,8,6,9,14,22,28,33,40,31,18];
+
+// ===================== ESTADO COMANDA =====================
+let mesaActual = 5;
+let catActual = 'Cervezas';
+let pedido = []; // {n,p,qty}
+
+// ===================== NAVEGACIÓN =====================
+function irA(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const el = document.getElementById(id);
+  if(el) el.classList.add('active');
+  document.querySelectorAll('.nav-link').forEach(l=>l.classList.toggle('active', l.dataset.t===id));
+  window.scrollTo({top:0});
+  const conChrome = id!=='login';
+  document.querySelectorAll('aside, #bottom-nav, header.lg\\:hidden').forEach(e=>e.style.display = conChrome ? '' : 'none');
+}
+
+function estadoInfo(e){
+  return {
+    libre:      { c:'border-emerald-300', dot:'bg-emerald-500', txt:'Libre',      badge:'text-emerald-700 bg-emerald-50' },
+    ocupada:    { c:'border-amber-300',   dot:'bg-amber-500',   txt:'Ocupada',    badge:'text-amber-700 bg-amber-50' },
+    por_cobrar: { c:'border-rose-300',    dot:'bg-rose-500',    txt:'Por cobrar', badge:'text-rose-700 bg-rose-50' },
+  }[e];
+}
+
+// ===================== RENDER MESAS =====================
+function renderMesas(){
+  const g = document.getElementById('grid-mesas');
+  g.innerHTML = mesas.map(m=>{
+    const i = estadoInfo(m.estado);
+    return `<button onclick="abrirMesa(${m.id})" class="bg-white rounded-2xl border-2 ${i.c} p-3 sm:p-4 text-left hover:shadow-md transition active:scale-95">
+      <div class="flex items-center justify-between">
+        <span class="font-bold text-slate-900">${m.n}</span>
+        <span class="w-2.5 h-2.5 rounded-full ${i.dot}"></span>
+      </div>
+      <p class="text-xs text-slate-400 mb-2">${m.zona}</p>
+      <span class="text-[11px] px-2 py-0.5 rounded-full ${i.badge}">${i.txt}</span>
+      <p class="mt-2 font-bold ${m.total?'text-slate-900':'text-slate-300'}">${peso(m.total)}</p>
+    </button>`;
+  }).join('');
+}
+
+function abrirMesa(id){
+  mesaActual = id;
+  const m = mesas.find(x=>x.id===id);
+  if(m.estado==='libre') m.estado='ocupada';
+  pedido = [];
+  document.getElementById('comanda-mesa').textContent = m.n;
+  renderCats(); renderProductos(); renderTicket();
+  irA('comanda');
+}
+
+// ===================== RENDER COMANDA =====================
+function renderCats(){
+  const c = document.getElementById('cat-tabs');
+  c.innerHTML = Object.keys(MENU).map(cat=>`
+    <button onclick="setCat('${cat}')" class="cat-tab whitespace-nowrap text-sm px-3 py-1.5 rounded-full border ${cat===catActual?'bg-slate-900 text-white border-slate-900':'bg-white border-slate-200 text-slate-600'}">${cat}</button>`).join('');
+}
+function setCat(c){ catActual=c; renderCats(); renderProductos(); }
+
+function renderProductos(){
+  const g = document.getElementById('grid-productos');
+  g.innerHTML = MENU[catActual].map(p=>`
+    <button onclick="addItem('${p.n.replace(/'/g,"")}',${p.p})" class="bg-white rounded-xl border border-slate-200 p-3 text-left hover:border-marca-400 hover:shadow-sm transition active:scale-95">
+      <p class="font-medium text-sm text-slate-800 leading-tight">${p.n}</p>
+      <p class="text-marca-700 font-bold mt-1">${peso(p.p)}</p>
+    </button>`).join('');
+}
+
+function addItem(n,p){
+  const ex = pedido.find(i=>i.n===n);
+  if(ex) ex.qty++; else pedido.push({n,p,qty:1});
+  renderTicket(); toast(n+' agregado');
+}
+function changeQty(n,d){
+  const it = pedido.find(i=>i.n===n); if(!it) return;
+  it.qty += d; if(it.qty<=0) pedido = pedido.filter(i=>i.n!==n);
+  renderTicket();
+}
+
+function totales(){
+  const sub = pedido.reduce((a,i)=>a+i.p*i.qty,0);
+  const inc = sub*0.08;
+  const prop = sub*0.10;
+  return { sub, inc, prop, total: sub+inc };
+}
+
+function renderTicket(){
+  const cont = document.getElementById('ticket-items');
+  const vacio = document.getElementById('ticket-vacio');
+  const btn = document.getElementById('btn-cobrar');
+  if(pedido.length===0){ cont.innerHTML=''; vacio.style.display=''; btn.disabled=true; }
+  else {
+    vacio.style.display='none'; btn.disabled=false;
+    cont.innerHTML = pedido.map(i=>`
+      <div class="flex items-center gap-2">
+        <div class="flex items-center border border-slate-200 rounded-lg">
+          <button onclick="changeQty('${i.n}',-1)" class="w-7 h-7 text-slate-500 font-bold">−</button>
+          <span class="w-6 text-center text-sm font-medium">${i.qty}</span>
+          <button onclick="changeQty('${i.n}',1)" class="w-7 h-7 text-slate-500 font-bold">+</button>
+        </div>
+        <span class="flex-1 text-sm truncate">${i.n}</span>
+        <span class="text-sm font-medium">${peso(i.p*i.qty)}</span>
+      </div>`).join('');
+  }
+  const t = totales();
+  document.getElementById('t-subtotal').textContent = peso(t.sub);
+  document.getElementById('t-inc').textContent = peso(t.inc);
+  document.getElementById('t-total').textContent = peso(t.total);
+  const m = mesas.find(x=>x.id===mesaActual); if(m) m.total = t.total;
+}
+
+// ===================== COBRO =====================
+function irACobro(){
+  if(pedido.length===0) return;
+  const m = mesas.find(x=>x.id===mesaActual);
+  m.estado='por_cobrar';
+  document.getElementById('caja-mesa').textContent = m.n;
+  const t = totales();
+  document.getElementById('cobro-items').innerHTML = pedido.map(i=>`
+    <div class="flex justify-between"><span class="text-slate-600">${i.qty}× ${i.n}</span><span>${peso(i.p*i.qty)}</span></div>`).join('');
+  document.getElementById('c-subtotal').textContent = peso(t.sub);
+  document.getElementById('c-inc').textContent = peso(t.inc);
+  document.getElementById('c-propina').textContent = peso(t.prop);
+  document.getElementById('c-total').textContent = peso(t.total + t.prop);
+  document.getElementById('recibe').value=''; document.getElementById('cambio').textContent='$0';
+  irA('caja');
+}
+function selMetodo(b){
+  document.querySelectorAll('.metodo').forEach(x=>{ x.classList.remove('border-marca-500','bg-marca-50'); x.classList.add('border-slate-200'); });
+  b.classList.add('border-marca-500','bg-marca-50'); b.classList.remove('border-slate-200');
+}
+function calcCambio(){
+  const t = totales(); const totalCobro = t.total + t.prop;
+  const recibe = +document.getElementById('recibe').value.replace(/\D/g,'')||0;
+  document.getElementById('cambio').textContent = peso(Math.max(0, recibe-totalCobro));
+}
+function confirmarPago(){
+  const m = mesas.find(x=>x.id===mesaActual);
+  m.estado='libre'; m.total=0; pedido=[];
+  toast('✅ Pago confirmado · recibo impreso');
+  renderMesas();
+  setTimeout(()=>irA('mesas'), 700);
+}
+
+// ===================== INVENTARIO =====================
+function nivel(it){
+  if(it.stock<=it.min) return 'critico';
+  if(it.stock<=it.min*1.5) return 'bajo';
+  return 'ok';
+}
+function renderInventario(){
+  let ok=0,bajo=0,crit=0;
+  document.getElementById('tbody-inv').innerHTML = INV.map(it=>{
+    const nv = nivel(it);
+    if(nv==='ok')ok++; else if(nv==='bajo')bajo++; else crit++;
+    const badge = { ok:'text-emerald-700 bg-emerald-50', bajo:'text-amber-700 bg-amber-50', critico:'text-rose-700 bg-rose-50' }[nv];
+    const txt = { ok:'OK', bajo:'Bajo', critico:'Crítico' }[nv];
+    return `<tr>
+      <td class="px-4 py-2.5 font-medium text-slate-800">${it.n}</td>
+      <td class="px-3 py-2.5 text-right">${it.stock} <span class="text-slate-400 text-xs">${it.u}</span></td>
+      <td class="px-3 py-2.5 text-right text-slate-400 hidden sm:table-cell">${it.min} ${it.u}</td>
+      <td class="px-4 py-2.5 text-right"><span class="text-xs px-2 py-0.5 rounded-full ${badge}">${txt}</span></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('kpi-ok').textContent=ok;
+  document.getElementById('kpi-bajo').textContent=bajo;
+  document.getElementById('kpi-critico').textContent=crit;
+}
+function renderAlertas(){
+  const al = INV.filter(it=>nivel(it)!=='ok');
+  document.getElementById('lista-alertas').innerHTML = al.map(it=>{
+    const crit = nivel(it)==='critico';
+    return `<div class="bg-white rounded-xl border ${crit?'border-rose-200':'border-amber-200'} p-4 flex items-center gap-3">
+      <div class="w-10 h-10 rounded-full grid place-items-center ${crit?'bg-rose-100':'bg-amber-100'}">${crit?'🔴':'🟡'}</div>
+      <div class="flex-1">
+        <p class="font-semibold text-slate-800">${it.n}</p>
+        <p class="text-xs text-slate-500">Quedan ${it.stock} ${it.u} · tope mínimo ${it.min} ${it.u}</p>
+      </div>
+      <button class="text-xs bg-slate-900 text-white px-3 py-1.5 rounded-lg">Reabastecer</button>
+    </div>`;
+  }).join('') || '<p class="text-sm text-slate-400">Sin alertas. Todo el inventario está en nivel OK. 🎉</p>';
+}
+
+// ===================== REPORTES =====================
+function renderReportes(){
+  const max = Math.max(...HORAS);
+  document.getElementById('chart').innerHTML = HORAS.map((h,i)=>`
+    <div class="flex-1 flex flex-col items-center justify-end h-full">
+      <div class="w-full bg-marca-400 hover:bg-marca-500 rounded-t transition" style="height:${(h/max*100)}%"></div>
+      <span class="text-[9px] text-slate-400 mt-1">${i+11}h</span>
+    </div>`).join('');
+  const maxv = Math.max(...TOP.map(t=>t.v));
+  document.getElementById('top-prod').innerHTML = TOP.map(t=>`
+    <div>
+      <div class="flex justify-between text-sm mb-1"><span class="text-slate-700">${t.n}</span><span class="text-slate-400">${t.v}</span></div>
+      <div class="h-2 bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-marca-500 rounded-full" style="width:${t.v/maxv*100}%"></div></div>
+    </div>`).join('');
+}
+
+// ===================== MODALES / TOAST =====================
+function abrirModal(id){ document.getElementById(id).classList.remove('hidden'); }
+function cerrarModal(id){ document.getElementById(id).classList.add('hidden'); }
+function cerrarModalBg(e,id){ if(e.target.id===id) cerrarModal(id); }
+function crearMesa(){
+  const nombre = document.getElementById('nueva-mesa-nombre').value || ('Mesa '+(mesas.length+1));
+  const zona = document.getElementById('nueva-mesa-zona').value;
+  mesas.push({ id:Date.now(), n:nombre, zona, estado:'libre', total:0 });
+  document.getElementById('nueva-mesa-nombre').value='';
+  cerrarModal('modal-mesa'); renderMesas(); toast(nombre+' agregada');
+}
+let toastT;
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.remove('hidden');
+  clearTimeout(toastT); toastT = setTimeout(()=>t.classList.add('hidden'), 1600);
+}
+
+// ===================== NAV BUILD =====================
+function buildNav(){
+  const side = document.getElementById('sidebar-nav');
+  const bottom = document.getElementById('bottom-nav');
+  side.innerHTML = NAV.map(n=>`
+    <button data-t="${n.id}" onclick="irA('${n.id}')" class="nav-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-300 hover:bg-slate-800 transition">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="${n.icon}"/></svg>${n.label}
+    </button>`).join('');
+  bottom.innerHTML = NAV.map(n=>`
+    <button data-t="${n.id}" onclick="irA('${n.id}')" class="nav-link flex flex-col items-center justify-center py-2 text-slate-500">
+      <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="${n.icon}"/></svg>${n.label}
+    </button>`).join('') + `
+    <button onclick="irA('mesas')" class="flex flex-col items-center justify-center py-2 text-slate-500">
+      <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M12 4v16m8-8H4"/></svg>Nuevo
+    </button>`;
+}
+
+// ===================== INIT =====================
+buildNav(); renderMesas(); renderInventario(); renderAlertas(); renderReportes();
+irA('login');
+</script>
+</body>
+</html>

@@ -39,6 +39,8 @@ Esta carpeta organiza el [levantamiento de requerimientos](../levantamiento_sist
 | [F2](flujos/F2-reabastecimiento-inventario.md) | Reabastecimiento de inventario |
 | [F3](flujos/F3-apertura-cierre-caja.md) | Apertura y cierre de caja |
 | [F4](flujos/F4-gestion-mesas.md) | Gestión de mesas (agregar/quitar) |
+| [F5](flujos/F5-division-de-cuentas.md) | División de cuentas (partes o ítems) |
+| [F6](flujos/F6-kds-barra-cocina.md) | KDS (Pantalla de Barra / Cocina) |
 
 ---
 

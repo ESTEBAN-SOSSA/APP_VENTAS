@@ -19,9 +19,12 @@ Definir la composición de los productos preparados para descontar automáticame
 
 ## Reglas de negocio
 - `Producto (preparado) 1—N Receta N—1 Insumo`.
-- Antes de confirmar una venta se valida que haya stock suficiente de cada insumo de la receta × cantidad vendida.
-- El costo del producto = Σ (cantidad de insumo × costo_unitario del insumo).
+- **Cálculo de Unidades Base:** Las recetas se definen usando la unidad base del insumo (ej. 60 ml de Ron, 20 ml de jarabe, 0.5 unidades de limón).
+- **Validación de Stock Agrupada:** Antes de guardar o confirmar un pedido (comanda), el sistema valida que el stock disponible de cada insumo cubra la demanda total requerida por todos los productos de la comanda (tanto directos como preparados).
+  - Si un insumo no cumple con la cantidad necesaria, la interfaz bloquea el envío de la comanda o advierte visualmente al mesero en tiempo real.
+- **Márgenes de Costo:** El costo estimado del producto se autocalcula como `Costo = Σ (cantidad_receta × costo_unitario del insumo base)`. Esto se recalcula automáticamente cuando se registra una compra que altera el `costo_unitario` del insumo.
 
 ## Criterios de aceptación
-- [ ] Un producto preparado descuenta todos sus insumos al venderse.
-- [ ] Se bloquea/avisa la venta si falta stock de un insumo.
+- [ ] Un producto preparado descuenta todos sus insumos al venderse (ej. 1 Cuba Libre descuenta Ron y Gaseosa).
+- [ ] Se bloquea/avisa la comanda si falta stock de algún insumo base o insumos compartidos en el pedido.
+- [ ] El costo total de la receta se actualiza si cambian los costos unitarios de los insumos.

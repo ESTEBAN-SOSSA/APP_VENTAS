@@ -111,7 +111,17 @@ frontend/  (React + Vite + Tailwind, PWA)
 
 ---
 
-## 5. Comunicación en tiempo real
+## 5. Comunicación en tiempo real y resiliencia de red
+
+El sistema utiliza **Socket.IO** sobre WebSockets para mantener la sincronización en tiempo real. Al operar en red local (LAN/Wi-Fi), se prevén caídas temporales de señal debido al desplazamiento de los meseros.
+
+### Estrategia de reconexión y conciliación de estado:
+1. **Configuración de Cliente (PWA):**
+   - El cliente Socket.IO se inicializa con `reconnection: true`, `reconnectionAttempts: Infinity`, y `reconnectionDelay: 1000` (con backoff exponencial) para asegurar que reconecte automáticamente en cuanto recupere señal Wi-Fi.
+2. **Eventos de sincronización tras reconexión:**
+   - Al reconectar (`socket.on('reconnect')`), el frontend realiza una petición HTTP `GET /mesas` y `GET /caja/estado` para refrescar el estado local completo (conciliación) y evitar datos obsoletos en pantalla.
+3. **Mensajería offline:**
+   - Los pedidos realizados mientras no hay red local se guardan temporalmente en la memoria del dispositivo (IndexedDB / LocalStorage) y se encolan con una marca temporal para sincronizarse en cuanto retorne la conexión.
 
 ```mermaid
 sequenceDiagram
@@ -149,7 +159,34 @@ flowchart LR
 
 ---
 
-## 7. Despliegue (Docker)
+## 7. Integración de Hardware e Impresión Térmica
+
+Dado que el servidor opera en un entorno local y autónomo, la impresión física se gestiona de forma directa:
+
+1. **Protocolo ESC/POS:**
+   - El backend NestJS genera la trama de impresión en formato binario plano usando comandos estándares **ESC/POS** (cortado de papel, negrita, alineación, tamaño de letra, impresión de logo).
+2. **Métodos de Conexión de Impresoras:**
+   - **Impresora de Red (Ethernet/Wi-Fi):** Conexión vía Sockets TCP directos en el puerto crudo `9100` (IP estática de la impresora). Es el método recomendado para comandas de barra y facturación en caja.
+   - **Impresora USB local:** En el equipo servidor local, se puede usar un driver de sistema o escribir directo al puerto serial/USB montado en el contenedor Docker.
+3. **Cola de Impresión (Queue Management):**
+   - Las solicitudes de impresión se encolan en memoria en el backend (ej. usando un módulo ligero como `bull` o una cola en memoria en NestJS) para evitar colisiones de impresión simultánea en el mismo hardware.
+
+---
+
+## 8. Resiliencia de la Base de Datos (SQLite)
+
+Aunque SQLite es de archivo único, requiere configuraciones de producción para soportar la concurrencia de hasta 15 usuarios concurrentes leyendo y escribiendo comandas:
+
+1. **Modo WAL (Write-Ahead Logging):**
+   - Se activa obligatoriamente al arrancar la aplicación (`PRAGMA journal_mode=WAL;`). Esto permite que múltiples meseros lean las comandas y mesas simultáneamente mientras el cajero o la barra realizan escrituras sin bloquear la base de datos (`database is locked`).
+2. **Sincronización síncrona reducida:**
+   - Configurado en `PRAGMA synchronous=NORMAL;` para un excelente rendimiento en escrituras rápidas y garantizar integridad contra fallos de software.
+3. **Backups del Archivo `.db`:**
+   - En lugar de detener el sistema, se utiliza la utilidad de backup en línea de SQLite o Prisma para generar una copia exacta en caliente.
+
+---
+
+## 9. Despliegue (Docker)
 
 ```
 docker-compose.yml
@@ -163,7 +200,7 @@ Pasos: `docker-compose up -d` en el servidor → acceder desde la red en `http:/
 
 ---
 
-## 8. Estrategia de ramas (Git)
+## 10. Estrategia de ramas (Git)
 
 | Rama | Propósito |
 |---|---|
@@ -175,15 +212,16 @@ Flujo sugerido: `feature/* → dev → staging → main`.
 
 ---
 
-## 9. Requerimientos no funcionales (resumen)
+## 11. Requerimientos no funcionales (resumen)
 
 | Categoría | Requerimiento |
 |---|---|
 | Multidispositivo | Responsive *mobile-first* (celular, tablet, PC). |
-| Tiempo real | Cambios visibles en segundos en todos los dispositivos. |
+| Tiempo real | Sincronización WebSockets y conciliación en reconexiones en segundos. |
 | Disponibilidad | 100% en red local, sin internet. |
-| Rendimiento | API < 300 ms en operaciones comunes. |
-| Seguridad | Hash de contraseñas, control de acceso por rol, sesiones protegidas. |
-| Confiabilidad | Backup automatizable; sin pérdida de comandas abiertas ante recarga. |
+| Rendimiento | API < 300 ms. SQLite en modo WAL para alta concurrencia. |
+| Seguridad | Hash de contraseñas, control de acceso por rol, PIN rápido de meseros. |
+| Confiabilidad | Backups automáticos programados (cron local), tolerancia a pérdida temporal de Wi-Fi. |
 | Instalabilidad | Despliegue con un solo comando (docker-compose). |
-| Localización | Moneda COP, textos en español. |
+| Hardware local | Soporte de impresión física ESC/POS directo por TCP (puerto 9100) o USB. |
+| Localización | Moneda COP, textos y reportes en español. |

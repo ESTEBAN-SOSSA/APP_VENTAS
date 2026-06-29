@@ -26,16 +26,28 @@ Cerrar la cuenta de una mesa mostrando **el detalle de lo pedido** y **cuánto h
 - Cierre de caja con **arqueo** (esperado vs. contado, diferencias).
 
 ## Entidades
-- `Venta(id, comanda_id, subtotal, impuesto_inc, descuento, propina, total, metodo_pago, recibido?, cambio?, usuario_id, caja_id, fecha)`
+- `Venta(id, comanda_id, subtotal, impuesto_inc, descuento, propina, total, metodo_pago, recibido?, cambio?, usuario_id, caja_id, fecha, tipo_division, fraccion_pago?)`
+  - `tipo_division`: Completo (sin dividir), Partes (por partes iguales), Items (por selección de ítems).
+  - `fraccion_pago`: ej. `0.5` si es la mitad en una división por valor.
 - `Caja(id, usuario_apertura_id, base_inicial, fecha_apertura, fecha_cierre?, total_esperado?, total_contado?, diferencia?, estado[abierta|cerrada])`
 - `MovimientoCaja(id, caja_id, tipo[ingreso|egreso], monto, motivo, fecha)`
 
 ## Reglas de negocio
-- `Comanda 1—1 Venta`; `Caja 1—N Venta`.
-- Al confirmar la venta: descuenta inventario ([M03](M03-inventario.md)/[M04](M04-recetas-fichas-tecnicas.md)), registra en la caja abierta, genera recibo y libera la mesa.
-- `total = subtotal − descuento + impuesto_inc + propina`.
-- La anulación requiere permiso de Administrador, queda en auditoría ([M12](M12-respaldos-auditoria.md)) y revierte los movimientos de inventario.
+- **Relaciones:** `Comanda 1—N Venta`; `Caja 1—N Venta`.
+- **Descuento de Inventario Diferido:** El descuento físico de insumos del inventario ([M03](M03-inventario.md)/[M04](M04-recetas-fichas-tecnicas.md)) se ejecuta en tiempo real para cada ítem cobrado (si la cuenta es dividida por ítems, el stock se reduce a medida que se liquidan los productos correspondientes; si es dividida por partes, se descuenta de forma prorrateada o al completarse el cobro final).
+- **Cálculo de Impuestos Individualizado:** El Impuesto Nacional al Consumo (INC) se calcula a nivel de producto (si `Producto.aplica_inc` es verdadero, se calcula el `%` sobre el precio base y se suma al subtotal).
+- **Fórmulas de Totales:**
+  - `subtotal_items = Σ (precio_unitario × cantidad)` de los ítems a cobrar en esta venta.
+  - `impuesto_inc = Σ (precio_unitario × cantidad × inc_porcentaje)` de los ítems gravados.
+  - `propina = subtotal_items × propina_sugerida_%` (sugerida en UI, editable por el usuario).
+  - `total = subtotal_items − descuento + impuesto_inc + propina`.
+- **Informes de Caja (Arqueo):**
+  - **Reporte X (Cierre de Turno/Parcial):** Conciliación que realiza el cajero a mitad de la jornada sin cerrar el sistema fiscalmente. Muestra ventas del turno, egresos y arqueo temporal.
+  - **Reporte Z (Cierre Diario):** Cierre definitivo del día fiscal en el bar. Bloquea la caja abierta actual y consolida todas las ventas del día, reseteando la acumulada diaria para la nueva jornada.
+- **Anulaciones:** Requieren pin de Administrador. Devuelven el inventario y registran un egreso en la caja si el pago ya se había recibido, guardando rastro en M12.
 
 ## Criterios de aceptación
-- [ ] Al cobrar, se muestra el **detalle de lo pedido** y el **total a cobrar**.
-- [ ] Se registran ventas y se puede hacer apertura/cierre de caja con arqueo.
+- [ ] Al cobrar, se muestra el **detalle de lo pedido** y el **total a cobrar** con desglose de INC y propina.
+- [ ] Soporte completo de división de cuenta (ver [Flujo 5](../flujos/F5-division-de-cuentas.md)).
+- [ ] Se registran ventas y se puede hacer apertura/cierre de caja con arqueo generando reportes tipo X y Z.
+- [ ] La anulación de ventas requiere pin de Administrador y revierte el stock del inventario.
