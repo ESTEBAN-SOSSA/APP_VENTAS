@@ -17,6 +17,10 @@ Avisar en tiempo real cuando un insumo llega o baja de su tope mínimo, para rea
 - **Margen de aviso configurable** (`alerta_margen_pct`, ej. 30%): define qué tan anticipado avisa.
   - Fórmula: avisa cuando `stock_actual <= stock_minimo × (1 + margen/100)`.
   - Ej.: con tope 20 y margen 30% → avisa al llegar a **26 unidades** o menos.
+- **Margen configurable a dos niveles:**
+  - **Global:** valor por defecto para todos los insumos.
+  - **Por insumo:** cada `Insumo` puede tener su propio `margen` (campo opcional) que **prevalece** sobre el global; si está vacío, usa el global.
+  - Margen efectivo = `Insumo.margen ?? margen_global`.
 - **Inventario en cantidades:** stock, topes y consumo por receta se manejan en **unidades/cantidades enteras** (sin conversión de ml/kg), para una operación simple en la tienda.
 - Lista/Reporte de **"productos por reabastecer"** con cantidad sugerida a pedir.
 
@@ -38,7 +42,7 @@ Avisar en tiempo real cuando un insumo llega o baja de su tope mínimo, para rea
 
 ## Criterios de aceptación
 - [ ] Se disparan alertas **antes** de tocar el tope, según el margen configurado (estado "Llegando al tope").
-- [ ] El margen de aviso anticipado es **configurable** por el Administrador.
+- [ ] El margen de aviso anticipado es **configurable** por el Administrador, tanto **global** como **por insumo** (el del insumo prevalece).
 - [ ] Existe una bandeja de alertas y un reporte de "por reabastecer" con cantidad sugerida.
 - [ ] El Administrador puede configurar correo y/o WhatsApp como destino de las alertas y activarlos/desactivarlos.
 - [ ] Al registrar una entrada que repone el stock, la alerta correspondiente se cierra automáticamente.
