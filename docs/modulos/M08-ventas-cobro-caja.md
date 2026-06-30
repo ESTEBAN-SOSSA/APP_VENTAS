@@ -51,10 +51,13 @@ Cerrar la cuenta de una mesa mostrando **el detalle de lo pedido** y **cuánto h
 - Cada **cobro confirmado** registra la venta en la caja del turno con su **método de pago**.
 - **Movimientos de caja**: ingresos y egresos con motivo y hora.
 - **Esperado en efectivo** = `base + ventas en efectivo + ingresos − egresos` (tarjeta/transferencia no afectan el efectivo).
-- **Cierre con arqueo**: se ingresa el efectivo contado, se calcula la **diferencia** (cuadre / sobrante / faltante) y se guarda el **Reporte Z** del turno.
+- **Reporte X (corte parcial):** muestra base, ventas netas, desglose por método, ingresos/egresos, anulaciones y esperado en efectivo, **sin cerrar la caja**.
+- **Cierre con arqueo (Reporte Z):** se ingresa el efectivo contado, se calcula la **diferencia** (cuadre / sobrante / faltante) y se guarda el cierre del turno.
+- **Anulación de ventas:** requiere **PIN de administrador** y motivo; **devuelve los insumos** al inventario, **excluye** la venta de los totales del turno y deja **traza de auditoría**.
 
 ## Criterios de aceptación
 - [ ] Al cobrar, se muestra el **detalle de lo pedido** y el **total a cobrar** con desglose de INC y propina.
 - [ ] Soporte completo de división de cuenta (ver [Flujo 5](../flujos/F5-division-de-cuentas.md)).
 - [ ] Se registran ventas y se puede hacer apertura/cierre de caja con arqueo generando reportes tipo X y Z.
-- [ ] La anulación de ventas requiere pin de Administrador y revierte el stock del inventario.
+- [ ] El **Reporte X** entrega el corte parcial sin cerrar la caja.
+- [ ] La anulación de ventas requiere pin de Administrador, revierte el stock del inventario y deja traza de auditoría.

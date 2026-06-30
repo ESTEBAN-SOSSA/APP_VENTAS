@@ -248,7 +248,19 @@
             </div>
           </div>
 
-          <button onclick="abrirArqueo()" class="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-lg px-5 py-3">Cerrar caja (arqueo)</button>
+          <!-- Ventas del turno (anulables) -->
+          <div class="bg-white rounded-2xl border border-slate-200 p-5">
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="font-bold">Ventas del turno</h3>
+              <span id="ventas-anul-count" class="text-xs text-rose-500"></span>
+            </div>
+            <div id="caja-ventas" class="divide-y divide-slate-100"></div>
+          </div>
+
+          <div class="flex flex-col sm:flex-row gap-2">
+            <button onclick="reporteX()" class="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold rounded-lg px-5 py-3">Reporte X (corte parcial)</button>
+            <button onclick="abrirArqueo()" class="bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-lg px-5 py-3">Cerrar caja (arqueo Z)</button>
+          </div>
         </div>
       </section>
 
@@ -505,6 +517,34 @@
       <button onclick="cerrarModal('modal-mov')" class="flex-1 border border-slate-300 rounded-lg py-2.5 font-medium">Cancelar</button>
       <button onclick="guardarMov()" class="flex-1 bg-marca-600 text-white rounded-lg py-2.5 font-semibold">Registrar</button>
     </div>
+  </div>
+</div>
+
+<!-- Modal: anular venta -->
+<div id="modal-anular" class="hidden fixed inset-0 z-50 bg-black/40 grid place-items-center p-4 overflow-y-auto" onclick="cerrarModalBg(event,'modal-anular')">
+  <div class="bg-white rounded-2xl p-5 w-full max-w-sm max-h-[90vh] overflow-y-auto my-auto">
+    <h3 class="font-bold text-lg mb-1">Anular venta</h3>
+    <p id="anular-info" class="text-sm text-slate-500 mb-1"></p>
+    <p class="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-4">Esta acción devuelve los insumos al inventario y queda registrada en auditoría.</p>
+    <label class="block text-sm font-medium mb-1">Motivo de la anulación</label>
+    <input id="anular-motivo" class="w-full border border-slate-300 rounded-lg px-3 py-2.5 mb-3 outline-none focus:ring-2 focus:ring-rose-400" placeholder="Ej. error del mesero, producto devuelto" />
+    <label class="block text-sm font-medium mb-1">PIN de administrador</label>
+    <input id="anular-pin" type="password" inputmode="numeric" class="w-full border border-slate-300 rounded-lg px-3 py-2.5 mb-1 outline-none focus:ring-2 focus:ring-rose-400" placeholder="••••" />
+    <p class="text-[11px] text-slate-400 mb-4">PIN demo: 1234</p>
+    <div class="flex gap-2">
+      <button onclick="cerrarModal('modal-anular')" class="flex-1 border border-slate-300 rounded-lg py-2.5 font-medium">Cancelar</button>
+      <button onclick="confirmarAnulacion()" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg py-2.5 font-semibold">Anular venta</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Reporte X -->
+<div id="modal-x" class="hidden fixed inset-0 z-50 bg-black/40 grid place-items-center p-4 overflow-y-auto" onclick="cerrarModalBg(event,'modal-x')">
+  <div class="bg-white rounded-2xl p-5 w-full max-w-sm max-h-[90vh] overflow-y-auto my-auto">
+    <h3 class="font-bold text-lg mb-1">Reporte X · Corte parcial</h3>
+    <p class="text-xs text-slate-500 mb-4">Conciliación de mitad de jornada. La caja <strong>permanece abierta</strong>.</p>
+    <div id="x-body" class="text-sm space-y-1.5"></div>
+    <button onclick="cerrarModal('modal-x')" class="w-full mt-5 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-lg py-2.5">Cerrar</button>
   </div>
 </div>
 
@@ -793,9 +833,10 @@ function enviarAlertasDe(list){
 function confirmarPago(){
   const t = totales();
   const totalCobro = t.total + t.prop;
-  const registrada = registrarVentaEnCaja(totalCobro, metodoSel);
-  const nuevas = descontarInventario(pedido);
   const m = mesas.find(x=>x.id===mesaActual);
+  const venta = { id:++ventaSeq, mesaNombre:m.n, items:pedido.map(i=>({n:i.n,qty:i.qty,p:i.p})), consumo:consumoPedido(pedido), total:totalCobro, metodo:metodoSel, hora:hora(), anulada:false };
+  const registrada = registrarVentaEnCaja(venta);
+  const nuevas = descontarInventario(pedido);
   m.estado='libre'; m.total=0; pedido=[];
   refrescarInv(); renderMesas(); renderCaja();
   toast('✅ Pago confirmado'+(registrada?' · registrado en caja':'')+' · inventario descontado');
@@ -806,29 +847,33 @@ function confirmarPago(){
 
 // ===================== CAJA / ARQUEO =====================
 let metodoSel = 'Efectivo';
-let caja = { abierta:false, base:0, apertura:null, ventas:[], movs:[], ultimoArqueo:null };
+let ventaSeq = 0, anularId = null;
+const PIN_ADMIN = '1234';
+let caja = { abierta:false, base:0, apertura:null, ventas:[], movs:[], anulaciones:[], ultimoArqueo:null };
 const num = v => +(''+v).replace(/\D/g,'')||0;
 const pesoSigned = d => (d>0?'+':d<0?'−':'') + '$' + Math.abs(Math.round(d)).toLocaleString('es-CO');
 function hora(){ return new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'}); }
 
 function abrirCaja(){
   const base = num(document.getElementById('caja-base').value);
-  caja = { abierta:true, base, apertura:hora(), ventas:[], movs:[], ultimoArqueo:caja.ultimoArqueo };
+  caja = { abierta:true, base, apertura:hora(), ventas:[], movs:[], anulaciones:[], ultimoArqueo:caja.ultimoArqueo };
   document.getElementById('caja-base').value='';
   renderCaja(); toast('Caja abierta · base '+peso(base));
 }
-function registrarVentaEnCaja(total, metodo){
+function registrarVentaEnCaja(venta){
   if(!caja.abierta) return false;
-  caja.ventas.push({ total, metodo, hora:hora() });
+  caja.ventas.push(venta);
   return true;
 }
+// Las ventas anuladas se excluyen de los totales del turno.
+function ventasValidas(){ return caja.ventas.filter(v=>!v.anulada); }
 function efectivoEsperado(){
-  const ventasEfectivo = caja.ventas.filter(v=>v.metodo==='Efectivo').reduce((a,v)=>a+v.total,0);
+  const ventasEfectivo = ventasValidas().filter(v=>v.metodo==='Efectivo').reduce((a,v)=>a+v.total,0);
   const ingresos = caja.movs.filter(m=>m.tipo==='ingreso').reduce((a,m)=>a+m.monto,0);
   const egresos = caja.movs.filter(m=>m.tipo==='egreso').reduce((a,m)=>a+m.monto,0);
   return caja.base + ventasEfectivo + ingresos - egresos;
 }
-function ventasTurno(){ return caja.ventas.reduce((a,v)=>a+v.total,0); }
+function ventasTurno(){ return ventasValidas().reduce((a,v)=>a+v.total,0); }
 
 function renderCaja(){
   const badge = document.getElementById('caja-estado-badge');
@@ -839,13 +884,14 @@ function renderCaja(){
   badge.className = 'text-xs px-3 py-1 rounded-full '+(caja.abierta?'text-emerald-700 bg-emerald-50':'text-slate-500 bg-slate-100');
 
   if(caja.abierta){
+    const validas = ventasValidas();
     document.getElementById('k-base').textContent = peso(caja.base);
     document.getElementById('k-ventas').textContent = peso(ventasTurno());
-    document.getElementById('k-tickets').textContent = caja.ventas.length;
+    document.getElementById('k-tickets').textContent = validas.length;
     document.getElementById('k-efectivo').textContent = peso(efectivoEsperado());
     const metodos = ['Efectivo','Tarjeta','Nequi/QR','Mixto'];
     document.getElementById('caja-metodos').innerHTML = metodos.map(me=>{
-      const arr = caja.ventas.filter(v=>v.metodo===me);
+      const arr = validas.filter(v=>v.metodo===me);
       const tot = arr.reduce((a,v)=>a+v.total,0);
       return `<div class="flex justify-between text-sm py-1.5 border-b border-slate-100 last:border-0"><span class="text-slate-600">${me} <span class="text-slate-400">(${arr.length})</span></span><span class="font-medium">${peso(tot)}</span></div>`;
     }).join('');
@@ -854,6 +900,17 @@ function renderCaja(){
         <span class="text-slate-600 min-w-0 truncate">${m.tipo==='ingreso'?'➕':'➖'} ${m.motivo} <span class="text-slate-400 text-xs">${m.hora}</span></span>
         <span class="font-medium whitespace-nowrap ${m.tipo==='ingreso'?'text-emerald-600':'text-rose-600'}">${m.tipo==='ingreso'?'+':'−'}${peso(m.monto)}</span>
       </div>`).join('') : '<p class="text-sm text-slate-400 py-2">Sin movimientos del turno.</p>';
+    // lista de ventas del turno (con opción de anular)
+    const anuladas = caja.ventas.filter(v=>v.anulada).length;
+    document.getElementById('ventas-anul-count').textContent = anuladas ? (anuladas+' anulada'+(anuladas>1?'s':'')) : '';
+    document.getElementById('caja-ventas').innerHTML = caja.ventas.length ? caja.ventas.slice().reverse().map(v=>`
+      <div class="flex items-center justify-between gap-2 py-2">
+        <div class="min-w-0">
+          <p class="text-sm font-medium ${v.anulada?'line-through text-slate-400':'text-slate-700'}">#${v.id} · ${v.mesaNombre} · ${peso(v.total)}</p>
+          <p class="text-xs text-slate-400">${v.metodo} · ${v.hora}${v.anulada?` · <span class="text-rose-500">Anulada: ${v.motivo}</span>`:''}</p>
+        </div>
+        ${v.anulada?'':`<button onclick="abrirAnular(${v.id})" class="text-xs border border-rose-300 text-rose-700 hover:bg-rose-50 px-2.5 py-1 rounded-lg font-medium whitespace-nowrap">Anular</button>`}
+      </div>`).join('') : '<p class="text-sm text-slate-400 py-2">Aún no hay ventas en el turno.</p>';
   } else {
     const u = caja.ultimoArqueo, cont = document.getElementById('caja-ultimo-arqueo');
     if(u){
@@ -902,11 +959,61 @@ function calcArqueo(){
 function cerrarCaja(){
   const contado = num(document.getElementById('arq-contado').value);
   const esperado = efectivoEsperado();
-  caja.ultimoArqueo = { hora:hora(), esperado, contado, dif:contado-esperado, ventas:ventasTurno(), tickets:caja.ventas.length };
+  caja.ultimoArqueo = { hora:hora(), esperado, contado, dif:contado-esperado, ventas:ventasTurno(), tickets:ventasValidas().length };
   caja.abierta = false;
   cerrarModal('modal-arqueo'); renderCaja();
   const dif = contado-esperado;
   toast('Caja cerrada (Z) · '+(dif===0?'cuadre exacto ✅':'diferencia '+pesoSigned(dif)));
+}
+
+// ---- Anulación de ventas (requiere PIN de administrador) ----
+function abrirAnular(id){
+  const v = caja.ventas.find(x=>x.id===id); if(!v) return;
+  anularId = id;
+  document.getElementById('anular-info').textContent = `#${v.id} · ${v.mesaNombre} · ${peso(v.total)} · ${v.metodo} · ${v.hora}`;
+  document.getElementById('anular-motivo').value=''; document.getElementById('anular-pin').value='';
+  abrirModal('modal-anular');
+}
+function confirmarAnulacion(){
+  const v = caja.ventas.find(x=>x.id===anularId); if(!v || v.anulada) return;
+  const motivo = document.getElementById('anular-motivo').value.trim();
+  const pin = document.getElementById('anular-pin').value.trim();
+  if(!motivo){ toast('Indica el motivo de la anulación'); return; }
+  if(pin!==PIN_ADMIN){ toast('PIN de administrador incorrecto'); return; }
+  v.anulada = true; v.motivo = motivo;
+  // devolver insumos al inventario
+  Object.keys(v.consumo||{}).forEach(idi=>{ const it = INV.find(x=>x.id==idi); if(it) it.stock = r2(it.stock + v.consumo[idi]); });
+  // traza de auditoría (M12)
+  caja.anulaciones.push({ ventaId:v.id, total:v.total, metodo:v.metodo, motivo, usuario:'Admin', hora:hora() });
+  cerrarModal('modal-anular'); refrescarInv(); renderCaja();
+  toast('Venta #'+v.id+' anulada · inventario devuelto');
+}
+
+// ---- Reporte X (corte parcial, la caja sigue abierta) ----
+function reporteX(){
+  const metodos = ['Efectivo','Tarjeta','Nequi/QR','Mixto'];
+  const validas = ventasValidas();
+  const ingresos = caja.movs.filter(m=>m.tipo==='ingreso').reduce((a,m)=>a+m.monto,0);
+  const egresos = caja.movs.filter(m=>m.tipo==='egreso').reduce((a,m)=>a+m.monto,0);
+  const filas = [
+    ['Hora del corte', hora()],
+    ['Caja abierta desde', caja.apertura],
+    ['Base inicial', peso(caja.base)],
+    ['Ventas netas', peso(ventasTurno())+' ('+validas.length+' tickets)'],
+  ];
+  metodos.forEach(me=>{
+    const arr = validas.filter(v=>v.metodo===me);
+    filas.push(['  · '+me, peso(arr.reduce((a,v)=>a+v.total,0))+' ('+arr.length+')']);
+  });
+  filas.push(['Ingresos', peso(ingresos)]);
+  filas.push(['Egresos', '−'+peso(egresos)]);
+  filas.push(['Anulaciones', caja.anulaciones.length+'']);
+  filas.push(['Esperado en efectivo', peso(efectivoEsperado())]);
+  document.getElementById('x-body').innerHTML = filas.map(([k,val])=>{
+    const fuerte = k==='Esperado en efectivo';
+    return `<div class="flex justify-between ${fuerte?'font-bold border-t border-slate-200 pt-2 mt-1 text-base':''}"><span class="${fuerte?'':'text-slate-500'}">${k}</span><span>${val}</span></div>`;
+  }).join('');
+  abrirModal('modal-x');
 }
 
 // ===================== INVENTARIO =====================
