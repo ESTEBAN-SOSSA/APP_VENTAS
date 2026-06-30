@@ -195,7 +195,7 @@
             <input id="recibe" oninput="calcCambio()" type="text" inputmode="numeric" class="w-full border border-slate-300 rounded-lg px-3 py-2.5 mb-2 outline-none focus:ring-2 focus:ring-marca-400" placeholder="$ 0" />
             <div class="flex justify-between text-sm bg-slate-50 rounded-lg px-3 py-2 mb-4"><span class="text-slate-500">Cambio</span><span id="cambio" class="font-semibold">$0</span></div>
             <button onclick="confirmarPago()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg py-3 transition">Confirmar pago e imprimir</button>
-            <button onclick="abrirModal('modal-dividir')" class="w-full mt-2 text-sm text-slate-500 hover:text-slate-800 py-2">Dividir la cuenta</button>
+            <button onclick="abrirDividir()" class="w-full mt-2 text-sm text-slate-500 hover:text-slate-800 py-2">Dividir la cuenta</button>
           </div>
         </div>
       </section>
@@ -398,14 +398,15 @@
 </div>
 
 <div id="modal-dividir" class="hidden fixed inset-0 z-50 bg-black/40 grid place-items-center p-4 overflow-y-auto" onclick="cerrarModalBg(event,'modal-dividir')">
-  <div class="bg-white rounded-2xl p-5 w-full max-w-sm max-h-[90vh] overflow-y-auto my-auto">
-    <h3 class="font-bold text-lg mb-3">Dividir la cuenta</h3>
-    <p class="text-sm text-slate-500 mb-4">Elige cómo repartir el total.</p>
-    <div class="space-y-2">
-      <button onclick="cerrarModal('modal-dividir')" class="w-full border border-slate-200 rounded-lg py-3 text-left px-4 hover:bg-slate-50">⚖️ <strong>Partes iguales</strong><span class="block text-xs text-slate-500">Entre 2, 3, 4… personas</span></button>
-      <button onclick="cerrarModal('modal-dividir')" class="w-full border border-slate-200 rounded-lg py-3 text-left px-4 hover:bg-slate-50">🧾 <strong>Por ítems</strong><span class="block text-xs text-slate-500">Cada quien paga lo suyo</span></button>
+  <div class="bg-white rounded-2xl p-5 w-full max-w-md max-h-[90vh] overflow-y-auto my-auto">
+    <h3 class="font-bold text-lg mb-1">Dividir la cuenta</h3>
+    <p class="text-sm text-slate-500 mb-3">Total a repartir: <span id="div-total" class="font-semibold text-slate-700"></span></p>
+    <div class="grid grid-cols-2 gap-2 mb-4">
+      <button id="tab-partes" onclick="setDivModo('partes')" class="border-2 rounded-xl py-2 text-sm font-medium">⚖️ Partes iguales</button>
+      <button id="tab-items" onclick="setDivModo('items')" class="border-2 rounded-xl py-2 text-sm font-medium">🧾 Por ítems</button>
     </div>
-    <button onclick="cerrarModal('modal-dividir')" class="w-full mt-4 text-sm text-slate-500 py-2">Cerrar</button>
+    <div id="dividir-body"></div>
+    <button onclick="cancelarDividir()" class="w-full mt-4 text-sm text-slate-500 hover:text-slate-800 py-2">Cancelar</button>
   </div>
 </div>
 
@@ -832,18 +833,122 @@ function enviarAlertasDe(list){
 
 function confirmarPago(){
   const t = totales();
-  const totalCobro = t.total + t.prop;
+  finalizarVenta([{ total:t.total + t.prop, metodo:metodoSel }]);
+}
+// Cierra la venta de la mesa. partes = [{total, metodo}] (1 parte = pago normal; varias = cuenta dividida)
+function finalizarVenta(partes){
+  const registrada = caja.abierta;
   const m = mesas.find(x=>x.id===mesaActual);
-  const venta = { id:++ventaSeq, mesaNombre:m.n, items:pedido.map(i=>({n:i.n,qty:i.qty,p:i.p})), consumo:consumoPedido(pedido), total:totalCobro, metodo:metodoSel, hora:hora(), anulada:false };
-  const registrada = registrarVentaEnCaja(venta);
+  const consumo = consumoPedido(pedido);
+  const itemsSnap = pedido.map(i=>({n:i.n,qty:i.qty,p:i.p}));
+  const grupo = partes.length>1 ? ('G'+(ventaSeq+1)) : null;
+  partes.forEach((p,idx)=>{
+    registrarVentaEnCaja({ id:++ventaSeq, mesaNombre:m.n, grupo,
+      items: idx===0?itemsSnap:[], consumo: idx===0?consumo:{},
+      total:Math.round(p.total), metodo:p.metodo, hora:hora(), anulada:false });
+  });
   const nuevas = descontarInventario(pedido);
   m.estado='libre'; m.total=0; pedido=[];
   refrescarInv(); renderMesas(); renderCaja();
-  toast('✅ Pago confirmado'+(registrada?' · registrado en caja':'')+' · inventario descontado');
+  const enc = partes.length>1 ? ('✅ Cuenta dividida en '+partes.length+' · cobrada') : '✅ Pago confirmado';
+  toast(enc + (registrada?' · registrado en caja':'') + ' · inventario descontado');
   if(!registrada) setTimeout(()=>toast('💡 Abre la caja para registrar el turno'), 1700);
   else if(nuevas.length) setTimeout(()=>enviarAlertasDe(nuevas), 1700);
   setTimeout(()=>irA('mesas'), 700);
 }
+
+// ===================== DIVISIÓN DE CUENTA =====================
+let split = null;
+function abrirDividir(){
+  if(pedido.length===0) return;
+  const t = totales(); const grand = t.total + t.prop;
+  const sub = pedido.reduce((a,i)=>a+i.p*i.qty,0);
+  const factor = sub>0 ? grand/sub : 0; // prorratea INC+propina a cada ítem
+  const lineas = [];
+  pedido.forEach(i=>{ for(let k=0;k<i.qty;k++) lineas.push({ n:i.n, valor:i.p*factor, pagada:false, sel:false }); });
+  split = { modo:'partes', grand, personas:2, partes:[], lineas, metodoSel:'Efectivo' };
+  abrirModal('modal-dividir'); renderDividir();
+}
+function setDivModo(m){ split.modo = m; renderDividir(); }
+function divPersonas(d){ split.personas = Math.max(2, Math.min(20, split.personas + d)); renderDividir(); }
+function divMetodo(m){ split.metodoSel = m; renderDividir(); }
+function divMetodosHTML(){
+  return ['Efectivo','Tarjeta','Nequi/QR','Mixto'].map(me=>`
+    <button onclick="divMetodo('${me}')" class="border-2 ${split.metodoSel===me?'border-marca-500 bg-marca-50':'border-slate-200'} rounded-lg py-2 text-xs font-medium">${me}</button>`).join('');
+}
+function renderDividir(){
+  document.getElementById('div-total').textContent = peso(split.grand);
+  const tp=document.getElementById('tab-partes'), ti=document.getElementById('tab-items');
+  tp.className = 'border-2 rounded-xl py-2 text-sm font-medium '+(split.modo==='partes'?'border-marca-500 bg-marca-50':'border-slate-200');
+  ti.className = 'border-2 rounded-xl py-2 text-sm font-medium '+(split.modo==='items'?'border-marca-500 bg-marca-50':'border-slate-200');
+  const body = document.getElementById('dividir-body');
+
+  if(split.modo==='partes'){
+    const pagadas = split.partes.length;
+    const pagadoYa = split.partes.reduce((a,p)=>a+p.total,0);
+    const restantes = split.personas - pagadas;
+    const valor = restantes<=1 ? (split.grand - pagadoYa) : Math.round(split.grand/split.personas);
+    body.innerHTML = `
+      <div class="flex items-center justify-between mb-3">
+        <span class="text-sm font-medium">Número de personas</span>
+        <div class="flex items-center border border-slate-200 rounded-lg">
+          <button onclick="divPersonas(-1)" ${pagadas>0?'disabled':''} class="w-9 h-9 font-bold text-slate-500 disabled:opacity-30">−</button>
+          <span class="w-8 text-center font-semibold">${split.personas}</span>
+          <button onclick="divPersonas(1)" ${pagadas>0?'disabled':''} class="w-9 h-9 font-bold text-slate-500 disabled:opacity-30">+</button>
+        </div>
+      </div>
+      <div class="bg-slate-50 rounded-lg p-3 mb-3 text-center">
+        <p class="text-xs text-slate-500">Cada persona paga</p>
+        <p class="text-2xl font-bold text-marca-700">${peso(Math.round(split.grand/split.personas))}</p>
+        <p class="text-xs text-slate-400 mt-1">Pagadas ${pagadas}/${split.personas}</p>
+      </div>
+      ${pagadas<split.personas ? `
+        <p class="text-xs font-medium text-slate-500 mb-1">Método de esta parte</p>
+        <div class="grid grid-cols-4 gap-1.5 mb-3">${divMetodosHTML()}</div>
+        <button onclick="registrarParte()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg py-2.5">Registrar parte · ${peso(valor)} (${split.metodoSel})</button>`
+      : `<p class="text-center text-sm text-emerald-700 font-medium py-2">Todas las partes cobradas ✅</p>`}
+      ${pagadas>0 ? `<div class="mt-3 text-xs text-slate-500 space-y-1 border-t border-slate-100 pt-2">${split.partes.map((p,i)=>`<div class="flex justify-between"><span>Parte ${i+1} · ${p.metodo}</span><span>${peso(p.total)}</span></div>`).join('')}</div>` : ''}`;
+  } else {
+    const pagado = split.lineas.filter(l=>l.pagada).reduce((a,l)=>a+l.valor,0);
+    const selSum = split.lineas.filter(l=>l.sel && !l.pagada).reduce((a,l)=>a+l.valor,0);
+    const todas = split.lineas.every(l=>l.pagada);
+    body.innerHTML = `
+      <div class="space-y-1 mb-3 max-h-44 overflow-y-auto pr-1">
+        ${split.lineas.map((l,idx)=>`
+          <label class="flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg ${l.pagada?'bg-emerald-50':'hover:bg-slate-50 cursor-pointer'}">
+            <span class="flex items-center gap-2 min-w-0">
+              <input type="checkbox" ${l.pagada?'disabled checked':(l.sel?'checked':'')} onchange="toggleLinea(${idx})" class="w-4 h-4 accent-marca-600"/>
+              <span class="text-sm truncate ${l.pagada?'line-through text-slate-400':''}">${l.n}</span>
+            </span>
+            <span class="text-sm ${l.pagada?'text-slate-400':''}">${peso(l.valor)}</span>
+          </label>`).join('')}
+      </div>
+      <div class="flex justify-between text-sm mb-3"><span class="text-slate-500">Pagado</span><span class="font-medium">${peso(pagado)} / ${peso(split.grand)}</span></div>
+      ${todas ? `<p class="text-center text-sm text-emerald-700 font-medium py-2">Todos los ítems cobrados ✅</p>` : `
+        <p class="text-xs font-medium text-slate-500 mb-1">Método de esta cuenta</p>
+        <div class="grid grid-cols-4 gap-1.5 mb-3">${divMetodosHTML()}</div>
+        <button onclick="cobrarSeleccion()" ${selSum<=0?'disabled':''} class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg py-2.5 disabled:opacity-40">Cobrar selección · ${peso(selSum)}</button>`}`;
+  }
+}
+function registrarParte(){
+  const pagadas = split.partes.length;
+  const pagadoYa = split.partes.reduce((a,p)=>a+p.total,0);
+  const restantes = split.personas - pagadas;
+  const valor = restantes<=1 ? (split.grand - pagadoYa) : Math.round(split.grand/split.personas);
+  split.partes.push({ total:valor, metodo:split.metodoSel });
+  if(split.partes.length>=split.personas) finalizeSplit(); else renderDividir();
+}
+function toggleLinea(idx){ const l=split.lineas[idx]; if(l.pagada) return; l.sel=!l.sel; renderDividir(); }
+function cobrarSeleccion(){
+  const sel = split.lineas.filter(l=>l.sel && !l.pagada);
+  const total = sel.reduce((a,l)=>a+l.valor,0);
+  if(total<=0) return;
+  sel.forEach(l=>{ l.pagada=true; l.sel=false; });
+  split.partes.push({ total:Math.round(total), metodo:split.metodoSel });
+  if(split.lineas.every(l=>l.pagada)) finalizeSplit(); else renderDividir();
+}
+function finalizeSplit(){ const partes = split.partes.slice(); cerrarModal('modal-dividir'); split=null; finalizarVenta(partes); }
+function cancelarDividir(){ split=null; cerrarModal('modal-dividir'); }
 
 // ===================== CAJA / ARQUEO =====================
 let metodoSel = 'Efectivo';

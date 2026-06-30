@@ -70,3 +70,13 @@ sequenceDiagram
 - Auditoría e historial vinculan cada pago al cajero correspondiente.
 - Control de caja actualizado inmediatamente por cada cobro fraccionado.
 - Cierre total e inhabilitación de la comanda únicamente cuando el saldo pendiente es $0.
+
+---
+
+## Implementado en el mockup
+- Desde el **cobro** → botón **"Dividir la cuenta"** con dos pestañas:
+  - **Partes iguales:** se elige el número de personas y se cobra cada parte (con su método). La última parte absorbe el redondeo para cuadrar exacto con el total.
+  - **Por ítems:** los ítems se expanden por unidad; se seleccionan los de cada pagador, se cobra esa selección (con su método) y se repite hasta liquidar todo. El **INC + propina** se prorratea a cada ítem para que la suma coincida con el total.
+- Cada parte cobrada genera una **Venta** independiente en la caja del turno con su **método de pago** (se agrupan por `grupo`), por lo que el desglose por método y el arqueo quedan correctos.
+- El **descuento de inventario** se aplica una sola vez al liquidar la cuenta completa.
+- Al cubrir el 100%, la **mesa se libera** automáticamente.
