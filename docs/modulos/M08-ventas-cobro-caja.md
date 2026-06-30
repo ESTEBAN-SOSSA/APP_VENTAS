@@ -46,6 +46,13 @@ Cerrar la cuenta de una mesa mostrando **el detalle de lo pedido** y **cuánto h
   - **Reporte Z (Cierre Diario):** Cierre definitivo del día fiscal en el bar. Bloquea la caja abierta actual y consolida todas las ventas del día, reseteando la acumulada diaria para la nueva jornada.
 - **Anulaciones:** Requieren pin de Administrador. Devuelven el inventario y registran un egreso en la caja si el pago ya se había recibido, guardando rastro en M12.
 
+## Implementado en el mockup
+- **Apertura de caja** con base inicial; estado Abierta/Cerrada visible.
+- Cada **cobro confirmado** registra la venta en la caja del turno con su **método de pago**.
+- **Movimientos de caja**: ingresos y egresos con motivo y hora.
+- **Esperado en efectivo** = `base + ventas en efectivo + ingresos − egresos` (tarjeta/transferencia no afectan el efectivo).
+- **Cierre con arqueo**: se ingresa el efectivo contado, se calcula la **diferencia** (cuadre / sobrante / faltante) y se guarda el **Reporte Z** del turno.
+
 ## Criterios de aceptación
 - [ ] Al cobrar, se muestra el **detalle de lo pedido** y el **total a cobrar** con desglose de INC y propina.
 - [ ] Soporte completo de división de cuenta (ver [Flujo 5](../flujos/F5-division-de-cuentas.md)).

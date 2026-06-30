@@ -164,8 +164,8 @@
         </div>
       </section>
 
-      <!-- ====================== CAJA / COBRO ====================== -->
-      <section id="caja" class="screen">
+      <!-- ====================== COBRO ====================== -->
+      <section id="cobro" class="screen">
         <button onclick="irA('comanda')" class="text-sm text-slate-500 hover:text-slate-800 flex items-center gap-1 mb-3">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M15 19l-7-7 7-7"/></svg> Volver a la comanda
         </button>
@@ -186,10 +186,10 @@
           <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
             <h3 class="font-bold mb-3">Método de pago</h3>
             <div class="grid grid-cols-2 gap-2 mb-4">
-              <button onclick="selMetodo(this)" class="metodo border-2 border-marca-500 bg-marca-50 rounded-xl py-3 text-sm font-medium">💵 Efectivo</button>
-              <button onclick="selMetodo(this)" class="metodo border-2 border-slate-200 rounded-xl py-3 text-sm font-medium">💳 Tarjeta</button>
-              <button onclick="selMetodo(this)" class="metodo border-2 border-slate-200 rounded-xl py-3 text-sm font-medium">📱 Nequi/QR</button>
-              <button onclick="selMetodo(this)" class="metodo border-2 border-slate-200 rounded-xl py-3 text-sm font-medium">🔀 Mixto</button>
+              <button data-m="Efectivo" onclick="selMetodo(this)" class="metodo border-2 border-marca-500 bg-marca-50 rounded-xl py-3 text-sm font-medium">💵 Efectivo</button>
+              <button data-m="Tarjeta" onclick="selMetodo(this)" class="metodo border-2 border-slate-200 rounded-xl py-3 text-sm font-medium">💳 Tarjeta</button>
+              <button data-m="Nequi/QR" onclick="selMetodo(this)" class="metodo border-2 border-slate-200 rounded-xl py-3 text-sm font-medium">📱 Nequi/QR</button>
+              <button data-m="Mixto" onclick="selMetodo(this)" class="metodo border-2 border-slate-200 rounded-xl py-3 text-sm font-medium">🔀 Mixto</button>
             </div>
             <label class="block text-sm font-medium mb-1">Recibe</label>
             <input id="recibe" oninput="calcCambio()" type="text" inputmode="numeric" class="w-full border border-slate-300 rounded-lg px-3 py-2.5 mb-2 outline-none focus:ring-2 focus:ring-marca-400" placeholder="$ 0" />
@@ -197,6 +197,58 @@
             <button onclick="confirmarPago()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg py-3 transition">Confirmar pago e imprimir</button>
             <button onclick="abrirModal('modal-dividir')" class="w-full mt-2 text-sm text-slate-500 hover:text-slate-800 py-2">Dividir la cuenta</button>
           </div>
+        </div>
+      </section>
+
+      <!-- ====================== CAJA / ARQUEO ====================== -->
+      <section id="caja" class="screen">
+        <div class="flex items-center justify-between gap-2 flex-wrap mb-4">
+          <div>
+            <h2 class="text-xl sm:text-2xl font-bold text-slate-900">Caja</h2>
+            <p class="text-sm text-slate-500">Apertura, movimientos del turno y cierre con arqueo</p>
+          </div>
+          <span id="caja-estado-badge" class="text-xs px-3 py-1 rounded-full"></span>
+        </div>
+
+        <!-- Caja cerrada: apertura -->
+        <div id="caja-cerrada" class="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 max-w-md">
+          <h3 class="font-bold mb-1">Abrir caja</h3>
+          <p class="text-sm text-slate-500 mb-4">Ingresa la base inicial para comenzar el turno.</p>
+          <label class="block text-sm font-medium mb-1">Base inicial</label>
+          <input id="caja-base" type="text" inputmode="numeric" class="w-full border border-slate-300 rounded-lg px-3 py-2.5 outline-none focus:ring-2 focus:ring-marca-400" placeholder="$ 0" />
+          <button onclick="abrirCaja()" class="w-full mt-4 bg-marca-600 hover:bg-marca-700 text-white font-semibold rounded-lg py-2.5">Abrir caja</button>
+          <div id="caja-ultimo-arqueo" class="hidden mt-5 border-t border-slate-100 pt-4"></div>
+        </div>
+
+        <!-- Caja abierta -->
+        <div id="caja-abierta" class="hidden space-y-4">
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div class="bg-white rounded-2xl border border-slate-200 p-4"><p class="text-xs text-slate-500">Base inicial</p><p class="text-lg sm:text-xl font-bold text-slate-900 mt-1" id="k-base">$0</p></div>
+            <div class="bg-white rounded-2xl border border-slate-200 p-4"><p class="text-xs text-slate-500">Ventas del turno</p><p class="text-lg sm:text-xl font-bold text-slate-900 mt-1" id="k-ventas">$0</p></div>
+            <div class="bg-white rounded-2xl border border-slate-200 p-4"><p class="text-xs text-slate-500">Tickets</p><p class="text-lg sm:text-xl font-bold text-slate-900 mt-1" id="k-tickets">0</p></div>
+            <div class="bg-white rounded-2xl border border-marca-200 bg-marca-50/40 p-4"><p class="text-xs text-slate-500">Esperado en efectivo</p><p class="text-lg sm:text-xl font-bold text-marca-700 mt-1" id="k-efectivo">$0</p></div>
+          </div>
+
+          <div class="grid lg:grid-cols-2 gap-4">
+            <!-- Ventas por método -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-5">
+              <h3 class="font-bold mb-3">Ventas por método de pago</h3>
+              <div id="caja-metodos"></div>
+            </div>
+            <!-- Movimientos -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-5">
+              <div class="flex items-center justify-between mb-3 gap-2 flex-wrap">
+                <h3 class="font-bold">Movimientos de caja</h3>
+                <div class="flex gap-2">
+                  <button onclick="abrirMov('ingreso')" class="text-xs border border-emerald-300 text-emerald-700 hover:bg-emerald-50 px-2.5 py-1 rounded-lg font-medium">+ Ingreso</button>
+                  <button onclick="abrirMov('egreso')" class="text-xs border border-rose-300 text-rose-700 hover:bg-rose-50 px-2.5 py-1 rounded-lg font-medium">− Egreso</button>
+                </div>
+              </div>
+              <div id="caja-movs"></div>
+            </div>
+          </div>
+
+          <button onclick="abrirArqueo()" class="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-lg px-5 py-3">Cerrar caja (arqueo)</button>
         </div>
       </section>
 
@@ -441,6 +493,37 @@
   </div>
 </div>
 
+<!-- Modal: movimiento de caja -->
+<div id="modal-mov" class="hidden fixed inset-0 z-50 bg-black/40 grid place-items-center p-4 overflow-y-auto" onclick="cerrarModalBg(event,'modal-mov')">
+  <div class="bg-white rounded-2xl p-5 w-full max-w-sm max-h-[90vh] overflow-y-auto my-auto">
+    <h3 id="mov-titulo" class="font-bold text-lg mb-3">Registrar movimiento</h3>
+    <label class="block text-sm font-medium mb-1">Monto</label>
+    <input id="mov-monto" type="text" inputmode="numeric" class="w-full border border-slate-300 rounded-lg px-3 py-2.5 mb-3 outline-none focus:ring-2 focus:ring-marca-400" placeholder="$ 0" />
+    <label class="block text-sm font-medium mb-1">Motivo</label>
+    <input id="mov-motivo" class="w-full border border-slate-300 rounded-lg px-3 py-2.5 mb-4 outline-none focus:ring-2 focus:ring-marca-400" placeholder="Ej. pago a proveedor, propina, etc." />
+    <div class="flex gap-2">
+      <button onclick="cerrarModal('modal-mov')" class="flex-1 border border-slate-300 rounded-lg py-2.5 font-medium">Cancelar</button>
+      <button onclick="guardarMov()" class="flex-1 bg-marca-600 text-white rounded-lg py-2.5 font-semibold">Registrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: arqueo / cierre de caja -->
+<div id="modal-arqueo" class="hidden fixed inset-0 z-50 bg-black/40 grid place-items-center p-4 overflow-y-auto" onclick="cerrarModalBg(event,'modal-arqueo')">
+  <div class="bg-white rounded-2xl p-5 w-full max-w-sm max-h-[90vh] overflow-y-auto my-auto">
+    <h3 class="font-bold text-lg mb-1">Cierre de caja · Arqueo</h3>
+    <p class="text-sm text-slate-500 mb-4">Cuenta el efectivo físico en la caja y compáralo con lo esperado.</p>
+    <div class="bg-slate-50 rounded-lg px-3 py-2.5 mb-3 flex justify-between text-sm"><span class="text-slate-500">Efectivo esperado</span><span id="arq-esperado" class="font-semibold">$0</span></div>
+    <label class="block text-sm font-medium mb-1">Efectivo contado</label>
+    <input id="arq-contado" oninput="calcArqueo()" type="text" inputmode="numeric" class="w-full border border-slate-300 rounded-lg px-3 py-2.5 mb-3 outline-none focus:ring-2 focus:ring-marca-400" placeholder="$ 0" />
+    <div class="flex justify-between text-sm border-t border-slate-100 pt-3 mb-4"><span class="text-slate-500">Diferencia</span><span id="arq-dif" class="font-semibold">$0</span></div>
+    <div class="flex gap-2">
+      <button onclick="cerrarModal('modal-arqueo')" class="flex-1 border border-slate-300 rounded-lg py-2.5 font-medium">Cancelar</button>
+      <button onclick="cerrarCaja()" class="flex-1 bg-slate-900 text-white rounded-lg py-2.5 font-semibold">Cerrar y guardar (Z)</button>
+    </div>
+  </div>
+</div>
+
 <!-- ===== TOAST ===== -->
 <div id="toast" class="hidden fixed bottom-24 lg:bottom-6 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white text-sm px-4 py-2.5 rounded-full shadow-lg"></div>
 
@@ -451,6 +534,7 @@ const peso = n => '$' + Math.round(n).toLocaleString('es-CO');
 const NAV = [
   { id:'mesas',      label:'Mesas',     icon:'M4 6h16M4 10h16M4 14h16M4 18h16' },
   { id:'inventario', label:'Inventario',icon:'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4' },
+  { id:'caja',       label:'Caja',      icon:'M3 10h18M5 6h14a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z' },
   { id:'alertas',    label:'Alertas',   icon:'M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2a2 2 0 01-.6 1.4L4 17h5m6 0a3 3 0 11-6 0' },
   { id:'reportes',   label:'Informes',  icon:'M3 3v18h18M7 14l3-3 3 3 5-6' },
 ];
@@ -659,11 +743,15 @@ function irACobro(){
   document.getElementById('c-propina').textContent = peso(t.prop);
   document.getElementById('c-total').textContent = peso(t.total + t.prop);
   document.getElementById('recibe').value=''; document.getElementById('cambio').textContent='$0';
-  irA('caja');
+  // método de pago por defecto: Efectivo
+  metodoSel = 'Efectivo';
+  document.querySelectorAll('.metodo').forEach((x,i)=>{ const on=i===0; x.classList.toggle('border-marca-500',on); x.classList.toggle('bg-marca-50',on); x.classList.toggle('border-slate-200',!on); });
+  irA('cobro');
 }
 function selMetodo(b){
   document.querySelectorAll('.metodo').forEach(x=>{ x.classList.remove('border-marca-500','bg-marca-50'); x.classList.add('border-slate-200'); });
   b.classList.add('border-marca-500','bg-marca-50'); b.classList.remove('border-slate-200');
+  metodoSel = b.dataset.m || 'Efectivo';
 }
 function calcCambio(){
   const t = totales(); const totalCobro = t.total + t.prop;
@@ -703,13 +791,122 @@ function enviarAlertasDe(list){
 }
 
 function confirmarPago(){
+  const t = totales();
+  const totalCobro = t.total + t.prop;
+  const registrada = registrarVentaEnCaja(totalCobro, metodoSel);
   const nuevas = descontarInventario(pedido);
   const m = mesas.find(x=>x.id===mesaActual);
   m.estado='libre'; m.total=0; pedido=[];
-  refrescarInv(); renderMesas();
-  toast('✅ Pago confirmado · inventario descontado · recibo impreso');
-  if(nuevas.length) setTimeout(()=>enviarAlertasDe(nuevas), 1700);
+  refrescarInv(); renderMesas(); renderCaja();
+  toast('✅ Pago confirmado'+(registrada?' · registrado en caja':'')+' · inventario descontado');
+  if(!registrada) setTimeout(()=>toast('💡 Abre la caja para registrar el turno'), 1700);
+  else if(nuevas.length) setTimeout(()=>enviarAlertasDe(nuevas), 1700);
   setTimeout(()=>irA('mesas'), 700);
+}
+
+// ===================== CAJA / ARQUEO =====================
+let metodoSel = 'Efectivo';
+let caja = { abierta:false, base:0, apertura:null, ventas:[], movs:[], ultimoArqueo:null };
+const num = v => +(''+v).replace(/\D/g,'')||0;
+const pesoSigned = d => (d>0?'+':d<0?'−':'') + '$' + Math.abs(Math.round(d)).toLocaleString('es-CO');
+function hora(){ return new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'}); }
+
+function abrirCaja(){
+  const base = num(document.getElementById('caja-base').value);
+  caja = { abierta:true, base, apertura:hora(), ventas:[], movs:[], ultimoArqueo:caja.ultimoArqueo };
+  document.getElementById('caja-base').value='';
+  renderCaja(); toast('Caja abierta · base '+peso(base));
+}
+function registrarVentaEnCaja(total, metodo){
+  if(!caja.abierta) return false;
+  caja.ventas.push({ total, metodo, hora:hora() });
+  return true;
+}
+function efectivoEsperado(){
+  const ventasEfectivo = caja.ventas.filter(v=>v.metodo==='Efectivo').reduce((a,v)=>a+v.total,0);
+  const ingresos = caja.movs.filter(m=>m.tipo==='ingreso').reduce((a,m)=>a+m.monto,0);
+  const egresos = caja.movs.filter(m=>m.tipo==='egreso').reduce((a,m)=>a+m.monto,0);
+  return caja.base + ventasEfectivo + ingresos - egresos;
+}
+function ventasTurno(){ return caja.ventas.reduce((a,v)=>a+v.total,0); }
+
+function renderCaja(){
+  const badge = document.getElementById('caja-estado-badge');
+  if(!badge) return;
+  document.getElementById('caja-cerrada').classList.toggle('hidden', caja.abierta);
+  document.getElementById('caja-abierta').classList.toggle('hidden', !caja.abierta);
+  badge.textContent = caja.abierta ? ('Abierta · desde '+caja.apertura) : 'Cerrada';
+  badge.className = 'text-xs px-3 py-1 rounded-full '+(caja.abierta?'text-emerald-700 bg-emerald-50':'text-slate-500 bg-slate-100');
+
+  if(caja.abierta){
+    document.getElementById('k-base').textContent = peso(caja.base);
+    document.getElementById('k-ventas').textContent = peso(ventasTurno());
+    document.getElementById('k-tickets').textContent = caja.ventas.length;
+    document.getElementById('k-efectivo').textContent = peso(efectivoEsperado());
+    const metodos = ['Efectivo','Tarjeta','Nequi/QR','Mixto'];
+    document.getElementById('caja-metodos').innerHTML = metodos.map(me=>{
+      const arr = caja.ventas.filter(v=>v.metodo===me);
+      const tot = arr.reduce((a,v)=>a+v.total,0);
+      return `<div class="flex justify-between text-sm py-1.5 border-b border-slate-100 last:border-0"><span class="text-slate-600">${me} <span class="text-slate-400">(${arr.length})</span></span><span class="font-medium">${peso(tot)}</span></div>`;
+    }).join('');
+    document.getElementById('caja-movs').innerHTML = caja.movs.length ? caja.movs.map(m=>`
+      <div class="flex justify-between items-center text-sm py-1.5 border-b border-slate-100 last:border-0">
+        <span class="text-slate-600 min-w-0 truncate">${m.tipo==='ingreso'?'➕':'➖'} ${m.motivo} <span class="text-slate-400 text-xs">${m.hora}</span></span>
+        <span class="font-medium whitespace-nowrap ${m.tipo==='ingreso'?'text-emerald-600':'text-rose-600'}">${m.tipo==='ingreso'?'+':'−'}${peso(m.monto)}</span>
+      </div>`).join('') : '<p class="text-sm text-slate-400 py-2">Sin movimientos del turno.</p>';
+  } else {
+    const u = caja.ultimoArqueo, cont = document.getElementById('caja-ultimo-arqueo');
+    if(u){
+      cont.classList.remove('hidden');
+      const col = u.dif===0?'text-emerald-600':(u.dif>0?'text-amber-600':'text-rose-600');
+      cont.innerHTML = `<p class="text-xs font-semibold text-slate-500 mb-2">📄 Último cierre (Reporte Z) · ${u.hora}</p>
+        <div class="text-sm space-y-1">
+          <div class="flex justify-between"><span class="text-slate-500">Ventas del turno</span><span>${peso(u.ventas)} (${u.tickets} tickets)</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Efectivo esperado</span><span>${peso(u.esperado)}</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Efectivo contado</span><span>${peso(u.contado)}</span></div>
+          <div class="flex justify-between font-semibold ${col}"><span>Diferencia</span><span>${pesoSigned(u.dif)}</span></div>
+        </div>`;
+    } else cont.classList.add('hidden');
+  }
+}
+
+// ---- Movimientos de caja ----
+let movTipo = 'ingreso';
+function abrirMov(tipo){
+  movTipo = tipo;
+  document.getElementById('mov-titulo').textContent = tipo==='ingreso' ? 'Registrar ingreso' : 'Registrar egreso';
+  document.getElementById('mov-monto').value=''; document.getElementById('mov-motivo').value='';
+  abrirModal('modal-mov');
+}
+function guardarMov(){
+  const monto = num(document.getElementById('mov-monto').value);
+  const motivo = document.getElementById('mov-motivo').value.trim() || (movTipo==='ingreso'?'Ingreso':'Egreso');
+  if(monto<=0){ toast('Indica un monto válido'); return; }
+  caja.movs.push({ tipo:movTipo, monto, motivo, hora:hora() });
+  cerrarModal('modal-mov'); renderCaja(); toast((movTipo==='ingreso'?'Ingreso':'Egreso')+' registrado: '+peso(monto));
+}
+
+// ---- Arqueo / cierre ----
+function abrirArqueo(){
+  document.getElementById('arq-esperado').textContent = peso(efectivoEsperado());
+  document.getElementById('arq-contado').value='';
+  const el = document.getElementById('arq-dif'); el.textContent='$0'; el.className='font-semibold';
+  abrirModal('modal-arqueo');
+}
+function calcArqueo(){
+  const dif = num(document.getElementById('arq-contado').value) - efectivoEsperado();
+  const el = document.getElementById('arq-dif');
+  el.textContent = pesoSigned(dif);
+  el.className = 'font-semibold '+(dif===0?'text-emerald-600':(dif>0?'text-amber-600':'text-rose-600'));
+}
+function cerrarCaja(){
+  const contado = num(document.getElementById('arq-contado').value);
+  const esperado = efectivoEsperado();
+  caja.ultimoArqueo = { hora:hora(), esperado, contado, dif:contado-esperado, ventas:ventasTurno(), tickets:caja.ventas.length };
+  caja.abierta = false;
+  cerrarModal('modal-arqueo'); renderCaja();
+  const dif = contado-esperado;
+  toast('Caja cerrada (Z) · '+(dif===0?'cuadre exacto ✅':'diferencia '+pesoSigned(dif)));
 }
 
 // ===================== INVENTARIO =====================
@@ -913,16 +1110,13 @@ function buildNav(){
       <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="${n.icon}"/></svg>${n.label}
     </button>`).join('');
   bottom.innerHTML = NAV.map(n=>`
-    <button data-t="${n.id}" onclick="irA('${n.id}')" class="nav-link flex flex-col items-center justify-center py-2 text-slate-500">
+    <button data-t="${n.id}" onclick="irA('${n.id}')" class="nav-link flex flex-col items-center justify-center py-2 text-slate-500 text-[10px]">
       <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="${n.icon}"/></svg>${n.label}
-    </button>`).join('') + `
-    <button onclick="irA('mesas')" class="flex flex-col items-center justify-center py-2 text-slate-500">
-      <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M12 4v16m8-8H4"/></svg>Nuevo
-    </button>`;
+    </button>`).join('');
 }
 
 // ===================== INIT =====================
-buildNav(); renderMesas(); renderInventario(); renderAlertas(); renderCanales(); renderReportes();
+buildNav(); renderMesas(); renderInventario(); renderAlertas(); renderCanales(); renderReportes(); renderCaja();
 irA('login');
 </script>
 </body>
